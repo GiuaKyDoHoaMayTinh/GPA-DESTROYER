@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GPA Destroyer</title>
+  <link rel="stylesheet" href="css/launcher.css" />
+  <script src="https://cdn.jsdelivr.net/npm/three@0.124.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.124.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.124.0/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    window.GPA_API_BASE = typeof window.GPA_API_BASE !== 'undefined' ? window.GPA_API_BASE : '';
+  </script>
+</head>
+<body>
+  <section id="stage-loading" class="stage active">
+    <div class="loading-bg" style="background-image: url('assets/2D/thumbnail.png')"></div>
+    <div class="loading-bar-wrap">
+      <div class="loading-bar-track">
+        <div id="loading-bar-fill" class="loading-bar-fill"></div>
+      </div>
+      <div id="loading-pct" class="loading-pct">0%</div>
+    </div>
+  </section>
+
+  <section id="stage-name" class="stage">
+    <div class="name-bg" style="background-image: url('assets/2D/backofname.png')"></div>
+    <div class="name-overlay" aria-hidden="true"></div>
+    <div class="name-layout">
+      <header class="name-brand">
+        <h1 class="name-brand-title">GPA Destroyer</h1>
+        <p class="name-brand-sub">Chào mừng đến UET — <strong>tài khoản</strong> để lưu điểm &amp; bảng xếp hạng trên server</p>
+      </header>
+
+      <div class="name-card">
+        <div id="auth-server-wrap">
+          <div class="card-mode-header">
+            <span class="mode-badge mode-badge-account">Tài khoản</span>
+            <h2 class="card-section-title">Đăng nhập hoặc đăng ký</h2>
+          </div>
+          <div class="auth-tabs" role="tablist">
+            <button type="button" id="tab-login" class="auth-tab active" role="tab" aria-selected="true">Đăng nhập</button>
+            <button type="button" id="tab-register" class="auth-tab" role="tab" aria-selected="false">Đăng ký</button>
+          </div>
+
+          <div id="panel-login" class="auth-panel" role="tabpanel">
+            <label class="field-label" for="login-username">Tên đăng nhập</label>
+            <input id="login-username" class="field-input" type="text" maxlength="32" autocomplete="username" />
+            <label class="field-label" for="login-password">Mật khẩu</label>
+            <input id="login-password" class="field-input" type="password" maxlength="128" autocomplete="current-password" />
+            <button type="button" id="btn-login" class="btn primary btn-block">Vào game</button>
+          </div>
+
+          <div id="panel-register" class="auth-panel is-hidden" role="tabpanel" hidden>
+            <label class="field-label" for="reg-username">Tên đăng nhập</label>
+            <input id="reg-username" class="field-input" type="text" maxlength="32" autocomplete="username" />
+            <label class="field-label" for="reg-password">Mật khẩu</label>
+            <input id="reg-password" class="field-input" type="password" maxlength="128" autocomplete="new-password" />
+            <label class="field-label" for="reg-password2">Xác nhận mật khẩu</label>
+            <input id="reg-password2" class="field-input" type="password" maxlength="128" autocomplete="new-password" />
+            <button type="button" id="btn-register" class="btn primary btn-block">Tạo tài khoản</button>
+          </div>
+
+          <p class="auth-switch">
+            <button type="button" id="btn-show-guest" class="btn-link">Không có tài khoản? Chơi khách (chỉ máy này)</button>
+          </p>
+        </div>
+
+        <div id="auth-guest-wrap" class="is-hidden" hidden>
+          <div class="card-mode-header">
+            <span class="mode-badge mode-badge-guest">Khách</span>
+            <h2 class="card-section-title">Chơi nhanh không đăng nhập</h2>
+            <p id="guest-card-desc" class="card-section-desc"></p>
+          </div>
+          <label class="field-label field-label-center" for="guest-display-name">Tên hiển thị</label>
+          <input id="guest-display-name" class="field-input" type="text" maxlength="40" autocomplete="off" placeholder="Ví dụ: Minh" />
+          <button type="button" id="btn-guest-continue" class="btn primary btn-block">Tiếp tục</button>
+          <p class="auth-switch">
+            <button type="button" id="btn-back-to-login" class="btn-link">← Quay lại đăng nhập / đăng ký</button>
+          </p>
+        </div>
+
+        <p id="name-error" class="name-error" role="alert" hidden></p>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    (function () {
+      function applyAuthMode() {
+        var s = document.getElementById('auth-server-wrap');
+        var g = document.getElementById('auth-guest-wrap');
+        if (!s || !g) return;
+        var ok = location.protocol === 'http:' || location.protocol === 'https:';
+        if (ok) {
+          s.hidden = false;
+          s.classList.remove('is-hidden');
+          g.hidden = true;
+          g.classList.add('is-hidden');
+        } else {
+          s.hidden = true;
+          s.classList.add('is-hidden');
+          g.hidden = false;
+          g.classList.remove('is-hidden');
+        }
+        var backRow = document.getElementById('btn-back-to-login');
+        if (backRow && backRow.parentElement) {
+          backRow.parentElement.hidden = !ok;
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyAuthMode);
+      } else {
+        applyAuthMode();
+      }
+    })();
+  </script>
+
+  <section id="stage-letter" class="stage">
+    <div class="letter-backdrop"></div>
+    <div class="letter-stage">
+      <img id="img-envelope" class="envelope" src="assets/2D/phongthu.png" alt="" />
+      <div id="letter-wrap" class="letter-wrap">
+        <img class="letter-img" src="assets/2D/giaytrungtuyen.png" alt="" />
+        <div id="letter-recipient" class="letter-recipient"></div>
+      </div>
+    </div>
+    <div id="letter-after" class="letter-after" hidden>
+      <p class="letter-hint">Để bắt đầu quá trình học tập tại uet, hãy bấm tiếp tục</p>
+      <button type="button" id="btn-letter-continue" class="btn primary">Tiếp tục</button>
+    </div>
+  </section>
+
+  <section id="stage-menu" class="stage">
+    <div class="menu-bg" style="background-image: url('assets/2D/background.png')"></div>
+    <canvas id="menu-canvas" class="menu-canvas"></canvas>
+    <div class="menu-buttons">
+      <button type="button" id="btn-play" class="menu-hit menu-hit-play" aria-label="Play"></button>
+      <button type="button" id="btn-rank" class="menu-hit menu-hit-rank" aria-label="Rank"></button>
+      <button type="button" id="btn-setting" class="menu-hit menu-hit-setting" aria-label="Setting"></button>
+    </div>
+    <div id="menu-user-pill" class="menu-user-pill" hidden>
+      <span id="menu-user-label"></span>
+    </div>
+    <audio id="menu-bgm" src="assets/sounds/sounback.mp3" loop preload="auto"></audio>
+
+    <div id="menu-tutorial" class="modal">
+      <div class="modal-card">
+        <p>Để bắt đầu, hãy ấn play</p>
+        <button type="button" id="btn-tutorial-agree" class="btn primary">Đồng ý</button>
+      </div>
+    </div>
+
+    <div id="menu-rank-modal" class="modal rank-modal-overlay" hidden>
+      <div class="rank-modal-card" role="dialog" aria-labelledby="rank-modal-heading">
+        <div class="rank-modal-head">
+          <h2 id="rank-modal-heading" class="rank-modal-title">Bảng xếp hạng</h2>
+          <p class="rank-modal-sub">Tổng điểm = điểm cao nhất <strong>Đăng ký tín chỉ</strong> + điểm cao nhất <strong>Deadline &amp; Jerry</strong> (cùng một hạng cho cả hai minigame).</p>
+        </div>
+        <div class="rank-panel">
+          <div id="rank-loading" class="rank-loading" hidden>Đang tải…</div>
+          <ol id="rank-list" class="rank-list"></ol>
+          <p id="rank-empty" class="rank-empty" hidden>Chưa có dữ liệu.</p>
+          <p id="rank-offline" class="rank-offline" hidden>Chỉ xem được khi chạy qua máy chủ (npm start).</p>
+        </div>
+        <button type="button" class="btn rank-close-btn modal-close" data-close="rank">Đóng</button>
+      </div>
+    </div>
+
+    <div id="menu-setting-modal" class="modal setting-modal-overlay" hidden>
+      <div class="setting-modal-card" role="dialog" aria-labelledby="setting-modal-heading">
+        <div class="setting-modal-head">
+          <h2 id="setting-modal-heading" class="setting-modal-title">Cài đặt</h2>
+          <p class="setting-modal-sub">Âm thanh nhạc nền menu — lưu trên trình duyệt này</p>
+        </div>
+
+        <section class="setting-audio-panel" aria-label="Nhạc nền">
+          <div class="setting-row setting-row-toggle">
+            <div class="setting-row-text">
+              <span class="setting-label">Nhạc nền</span>
+              <span class="setting-hint">Bật / tắt phát nhạc</span>
+            </div>
+            <button
+              type="button"
+              id="setting-bgm-toggle"
+              class="setting-toggle"
+              role="switch"
+              aria-checked="true"
+              aria-label="Bật tắt nhạc nền"
+            >
+              <span class="setting-toggle-track">
+                <span class="setting-toggle-thumb"></span>
+              </span>
+            </button>
+          </div>
+          <div class="setting-row setting-volume-row">
+            <label class="setting-label-block" for="setting-bgm-volume">
+              <span class="setting-label">Mức âm lượng</span>
+              <span id="setting-bgm-pct" class="setting-pct">45%</span>
+            </label>
+            <input
+              type="range"
+              id="setting-bgm-volume"
+              class="setting-range"
+              min="0"
+              max="100"
+              value="45"
+              aria-valuemin="0"
+              aria-valuemax="100"
+            />
+          </div>
+        </section>
+
+        <button type="button" id="btn-logout" class="btn setting-logout-btn">Đăng xuất</button>
+        <button type="button" class="btn setting-close-btn modal-close" data-close="setting">Đóng</button>
+      </div>
+    </div>
+
+    <div id="menu-scholarship-modal" class="modal scholarship-launcher-modal" hidden>
+      <div class="scholarship-launcher-card" role="dialog" aria-labelledby="scholarship-launcher-heading">
+        <div class="scholarship-launcher-badge" aria-hidden="true">Học bổng</div>
+        <h2 id="scholarship-launcher-heading" class="scholarship-launcher-title">
+          Chúc mừng bạn đã giành được học bổng khuyến khích học tập!
+        </h2>
+        <img
+          id="scholarship-launcher-img"
+          class="scholarship-launcher-img"
+          src="assets/2D/BIDV.png"
+          alt="Thông báo học bổng"
+          onerror="this.style.display='none'"
+        />
+        <div class="scholarship-launcher-actions">
+          <button type="button" id="btn-scholarship-continue" class="btn primary">Tiếp tục</button>
+        </div>
+      </div>
+    </div>
+    <audio id="scholarship-sfx" src="src/game2_1/asset/audio/success.mp3" preload="auto"></audio>
+  </section>
+
+  <section id="stage-play-journey" class="stage play-journey-stage">
+    <div class="play-journey-bg" aria-hidden="true"></div>
+    <div class="play-journey-vignette" aria-hidden="true"></div>
+    <div id="play-progress" class="play-progress play-progress-journey" hidden>
+      <p class="play-journey-caption">Từ trường → về nhà</p>
+      <div class="play-progress-icons">
+        <img src="assets/2D/iconofschool.png" alt="" />
+        <img src="assets/2D/iconofchar2.png" alt="" />
+        <img src="assets/2D/iconofhouse.png" alt="" />
+      </div>
+      <div class="play-progress-track">
+        <div id="play-progress-fill" class="play-progress-fill"></div>
+      </div>
+    </div>
+  </section>
+
+  <script src="js/scoreClient.js"></script>
+  <script src="js/launcher.js"></script>
+</body>
+</html>

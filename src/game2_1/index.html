@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Typing Game</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Start Screen -->
+    <section class="start-screen">
+        <img src="asset/images/custom-play-button.webp" alt="Start Game" id="startImg" title="Nhấn Enter để bắt đầu chơi">
+    </section>
+
+    <!-- Game Screen -->
+    <section class="game-screen">
+        <div id="currentWord">apple</div>
+        <input type="text" id="answer" placeholder="Type here" oninput="checkInput()">
+    </section>
+
+    <div id="blackout"></div>
+
+    <!-- End Screen -->
+    <section class="end-screen" onclick="returnToStart()">
+        <div style="color: white; font-size: 200px; font-weight: bold;">Score:</div>
+        <div class="final-score" id="finalScore">0</div>
+    </section>
+
+    <!-- Stats Display -->
+    <div class="stats">
+        <p>Score: <span id="score">0</span><span id="pointsAdded"></span></p>
+        <p>Time: <span id="time">90</span>s</p>
+    </div>
+
+    <!-- Audio element for success sound -->
+    <audio id="successSound" src="asset/audio/success.mp3" preload="auto"></audio>
+
+    <script src="../../js/scoreClient.js"></script>
+    <!-- Import danh sách từ -->
+    <script src="js/words.js"></script>
+    <!-- Import logic game -->
+    <script src="js/game.js"></script>
+</body>
+</html>

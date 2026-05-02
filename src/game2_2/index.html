@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game 3D - Phòng, Người và Chuột</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.module.js",
+      "three/addons/loaders/GLTFLoader.js": "https://cdn.jsdelivr.net/npm/three@0.154.0/examples/jsm/loaders/GLTFLoader.js",
+      "three/addons/renderers/CSS3DRenderer.js": "https://cdn.jsdelivr.net/npm/three@0.154.0/examples/jsm/renderers/CSS3DRenderer.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <!-- Audio elements for mouse sounds -->
+  <audio id="mouseRunSound" src="assets/audio/rat1.mp3" preload="auto"></audio>
+  <audio id="mouseThreatenSound" src="assets/audio/rat3.mp3" preload="auto"></audio>
+  <audio id="mouseChasedSound" src="assets/audio/rat2.mp3" preload="auto"></audio>
+
+  <div id="overlay">
+    <div class="panel" id="hint">Đang khởi tạo…</div>
+    <div class="panel" id="actionHint"></div>
+    <div class="panel" id="message"> </div>
+  </div>
+
+  <div id="end-journey-overlay" class="end-journey-overlay" hidden>
+    <div class="end-journey-bg" aria-hidden="true"></div>
+    <div class="end-journey-vignette" aria-hidden="true"></div>
+    <div class="end-journey-bar">
+      <p class="end-journey-caption">Từ nhà → đến trường</p>
+      <div class="end-journey-icons">
+        <img src="../../assets/2D/iconofhouse.png" alt="" />
+        <img src="../../assets/2D/iconofchar2.png" alt="" />
+        <img src="../../assets/2D/iconofschool.png" alt="" />
+      </div>
+      <div class="end-journey-track">
+        <div id="end-journey-fill" class="end-journey-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="story-modal-wrap" class="story-overlay" hidden>
+    <div class="story-card">
+      <p id="story-modal-text" class="story-text"></p>
+      <button type="button" id="story-modal-ok" class="story-btn">Oke</button>
+    </div>
+  </div>
+
+  <div id="g1-frame-wrap" class="g1-frame-wrap" hidden>
+    <iframe id="g1-frame" class="g1-frame" title="Đăng ký tín chỉ"></iframe>
+  </div>
+
+  <div id="rank-modal-wrap" class="story-overlay rank-overlay" hidden>
+    <div class="rank-panel">
+      <img class="rank-hero" src="../../assets/2D/rank.png" alt="" width="120" height="120" onerror="this.style.display='none'" />
+      <h2 class="rank-title">Bảng xếp hạng</h2>
+      <ul id="rank-list-body" class="rank-list-body"></ul>
+      <button type="button" id="rank-modal-close" class="story-btn">Đóng</button>
+    </div>
+  </div>
+
+  <script src="../../js/scoreClient.js"></script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { initScene, loadModels, getScene, getRenderer, getPlayer, getMouseModel, getLampState, updateDoorIntro } from './js/scene.js';
+    import { initCamera, updateCameraFollow, getCamera, updateCameraAspect } from './js/camera.js';
+    import { initInput, initWindowResize } from './js/input.js';
+    import { initPlayer, updatePlayerMovement, getActionState, setPlayerTarget, standUp } from './js/player.js';
+    import { initMouse, updateMouseMovement } from './js/mouse.js';
+    import { initUI, updateHint } from './js/ui.js';
+    import { CONFIG } from './js/utils.js';
+    import { getCSS3DRenderer, updateCSS3DRendererSize, toggleEmbeddedGame } from './js/embeddedGame.js';
+    import * as story from './js/storyFlow.js';
+
+    console.log('🎮 Game khởi động...');
+
+    story.registerStoryApi({
+      setPlayerTarget,
+      standUp,
+      getPlayer,
+      toggleEmbeddedGame,
+    });
+    story.initStoryFlow();
+    
+    // ============ Khởi tạo ============
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    // Khởi tạo Scene & Renderer
+    console.log('🎨 Khởi tạo Scene và Renderer...');
+    initScene(width, height);
+    const scene = getScene();
+    const renderer = getRenderer();
+
+    // Khởi tạo Camera
+    console.log('📷 Khởi tạo Camera...');
+    const camera = initCamera(width, height);
+
+    // Khởi tạo Player & Mouse
+    console.log('👤 Khởi tạo Player và Mouse...');
+    initPlayer();
+    initMouse();
+
+    // Khởi tạo UI
+    console.log('🖼️  Khởi tạo UI...');
+    initUI();
+
+    // Khởi tạo Input
+    const deskZone = new THREE.Vector3(CONFIG.deskZone.x, CONFIG.deskZone.y, CONFIG.deskZone.z);
+    const bedZone = new THREE.Vector3(CONFIG.bedZone.x, CONFIG.bedZone.y, CONFIG.bedZone.z);
+    const lampZone = new THREE.Vector3(CONFIG.lampZone.x, CONFIG.lampZone.y, CONFIG.lampZone.z);
+
+    story.initStoryZones(deskZone, bedZone);
+
+    let player = null;
+    let mouseModel = null;
+
+    // Tải các mô hình
+    console.log('📦 Bắt đầu tải các mô hình 3D...');
+    loadModels(() => {
+      player = getPlayer();
+      mouseModel = getMouseModel();
+      console.log('✅ Tất cả mô hình đã được tải:', { player: !!player, mouseModel: !!mouseModel });
+      
+      if (player) {
+        story.onModelsReady();
+        console.log('🎮 Khởi tạo Input...');
+        initInput(player, deskZone, bedZone, lampZone, Math.max(CONFIG.zoneRadius, CONFIG.lampRadius));
+        initWindowResize(renderer, camera);
+        updateHint(player.position, getActionState(), deskZone, bedZone, lampZone, getLampState(), Math.max(CONFIG.zoneRadius, CONFIG.lampRadius));
+        console.log('🚀 Game sẵn sàng!');
+      } else {
+        console.error('❌ Player không được load!');
+      }
+    }, camera);
+
+    // ============ Animation Loop ============
+    let lastTime = 0;
+    let hintUpdateCounter = 0;
+
+    function animate(time) {
+      const dt = Math.min((time - lastTime) / 1000, 0.05);
+      lastTime = time;
+
+      updateDoorIntro(dt);
+
+      // Cập nhật nhân vật
+      if (player) {
+        story.storyTick(player);
+        updatePlayerMovement(player, dt);
+        updateCameraFollow(player, camera);
+      }
+
+      // Cập nhật chuột
+      if (mouseModel) {
+        updateMouseMovement(mouseModel, dt);
+      }
+
+      // Cập nhật hint mỗi 200ms
+      hintUpdateCounter += dt * 1000;
+      if (hintUpdateCounter > 200) {
+        if (player) {
+          updateHint(player.position, getActionState(), deskZone, bedZone, lampZone, getLampState(), Math.max(CONFIG.zoneRadius, CONFIG.lampRadius));
+        } else {
+          updateHint(null, 'walk', deskZone, bedZone, lampZone, getLampState(), Math.max(CONFIG.zoneRadius, CONFIG.lampRadius));
+        }
+        hintUpdateCounter = 0;
+      }
+
+      // Render
+      renderer.render(scene, camera);
+      
+      // Render embedded game (CSS3D)
+      const css3dRenderer = getCSS3DRenderer();
+      if (css3dRenderer) {
+        css3dRenderer.render(scene, camera);
+      }
+      
+      requestAnimationFrame(animate);
+    }
+
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
