@@ -315,6 +315,7 @@ export class GameScene extends Phaser.Scene {
         if (this.gameIsOver) return;
 
         if (subjectIndex !== -1) {
+            this.sound.play('pop', { volume: 0.5 });
             const subjectMax = this.creditBoxes[subjectIndex].length * 2;
             if (this.subjectBallCount[subjectIndex] < subjectMax) {
                 this.subjectBallCount[subjectIndex]++;
@@ -420,33 +421,18 @@ export class GameScene extends Phaser.Scene {
         this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
             this.scene.start('GameOverScene', {
                 isWin: isWin,
-                score: this.getScoreForResult(isWin),
+                score: isWin ? this.score : 0  // Chỉ truyền điểm khi thắng
             });
         });
-    }
-
-    getCompletedCredits() {
-        let n = 0;
-        for (let i = 0; i < this.subjectBallCount.length; i++) {
-            n += Math.floor(this.subjectBallCount[i] / 2);
-        }
-        return n;
-    }
-
-    /**
-     * Thắng: 80 + bonus. Thua: điểm theo tín chỉ + bonus (tối đa 79) để bảng xếp hạng phản ánh tiến độ, luôn dưới mức thắng tối thiểu.
-     */
-    getScoreForResult(isWin) {
-        if (isWin) return this.score;
-        const credits = this.getCompletedCredits();
-        const raw = credits * 4 + this.bonusScore;
-        return Math.min(79, Math.max(0, Math.floor(raw)));
     }
 
     handGameOver() {
         this.gameIsOver = true;
 
-        const totalCreditMarked = this.getCompletedCredits();
+        let totalCreditMarked = 0;
+        for (let i = 0; i < this.subjectBallCount.length; i++) {
+            totalCreditMarked += Math.floor(this.subjectBallCount[i] / 2);
+        }
         const totalCreditNeeded = this.creditCounts.reduce((sum, count) => sum + count, 0);
         const isWin = totalCreditMarked === totalCreditNeeded;
 
@@ -457,7 +443,7 @@ export class GameScene extends Phaser.Scene {
         this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
             this.scene.start('GameOverScene', {
                 isWin: isWin,
-                score: this.getScoreForResult(isWin),
+                score: isWin ? this.score : 0
             });
         });
     }
