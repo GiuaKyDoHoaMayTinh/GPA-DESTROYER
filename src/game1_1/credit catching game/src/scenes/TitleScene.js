@@ -16,8 +16,6 @@ export class TitleScene extends Phaser.Scene {
         this.load.atlas('Subjects','assets/spritesheets/Subjects.png','assets/spritesheets/subject_spritesheet.json');
         this.load.audio('pop', 'assets/audio/pop.mp3');
         this.load.audio('xtremefreddy-game-music-loop-5-144569', 'assets/audio/xtremefreddy-game-music-loop-5-144569.mp3');
-        this.load.audio('lose', 'assets/audio/lose.mp3');
-        this.load.audio('win', 'assets/audio/win.mp3');
     }
 
 
@@ -43,7 +41,7 @@ export class TitleScene extends Phaser.Scene {
 
         this.cameras.main.fadeIn(500);
         this.sound.play('xtremefreddy-game-music-loop-5-144569', {
-            volume: 0.3,
+            volume: 0.5,
             loop: true
         });
     }
