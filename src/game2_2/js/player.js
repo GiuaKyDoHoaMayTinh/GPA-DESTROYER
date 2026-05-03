@@ -14,7 +14,7 @@ let walkAnimationTime = 0;
 const walkAnimationSpeed = 6; // Tốc độ bobbing
 const PLAYER_DEBUG = true;
 
-let playerTarget = new THREE.Vector3(0, 0, 2.4); // Vị trí mục tiêu cho nhân vật
+let playerTarget = new THREE.Vector3(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y, CONFIG.playerStartPos.z); // Vị trí mục tiêu cho nhân vật
 
 const keys = {
   w: false,
