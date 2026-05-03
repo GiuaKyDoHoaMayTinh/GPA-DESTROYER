@@ -134,7 +134,7 @@ export function setPlayerPose(player, position, rotationY, stateText, rotationX 
 }
 
 export function sitAtDesk(player, deskZone) {
-  const newPos = new THREE.Vector3(deskZone.x + 0.5, -0.5, deskZone.z + 0.35);
+  const newPos = new THREE.Vector3(deskZone.x + 0.5, -0.5, deskZone.z + 0.15);
   setPlayerPose(player, newPos, -Math.PI / 2, 'sit');
   onPlayerSatDeskAfterPose();
 
