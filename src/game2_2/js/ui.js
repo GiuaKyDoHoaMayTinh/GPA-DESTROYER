@@ -50,6 +50,20 @@ export function hideActionHint() {
   actionHintElement.style.display = 'none';
 }
 
+export function playBgMusic() {
+  const bgMusic = document.getElementById('bgMusic');
+  if (bgMusic && bgMusic.paused) {
+    bgMusic.play().catch(() => {});
+  }
+}
+
+export function pauseBgMusic() {
+  const bgMusic = document.getElementById('bgMusic');
+  if (bgMusic && !bgMusic.paused) {
+    bgMusic.pause();
+  }
+}
+
 export function showMessage(text) {
   if (!messageElement) return;
   messageElement.textContent = text;

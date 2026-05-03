@@ -4,6 +4,7 @@
  * Debug: localStorage GPA_DEBUG_STORY=1 → log gameOver / phase.
  */
 import { isEmbeddedGameActive, getEmbeddedGameWindow } from './embeddedGame.js';
+import { playBgMusic, pauseBgMusic } from './ui.js';
 const STORY_KEY = 'gpa_g2_story_phase';
 const SESSION_PLAYER = 'gpa_current_player';
 
@@ -64,12 +65,14 @@ function hideG1Frame() {
   const f = el('g1-frame');
   if (w) w.hidden = true;
   if (f) f.src = 'about:blank';
+  playBgMusic();
 }
 
 function showG1Frame() {
   const w = el('g1-frame-wrap');
   const f = el('g1-frame');
   if (!w || !f) return;
+  pauseBgMusic();
   f.src = '../game1_1/credit%20catching%20game/index.html?hub=1&embed=1&v=' + Date.now();
   w.hidden = false;
 }
@@ -139,6 +142,7 @@ async function fetchUserCombinedLeaderboardRank() {
 const LAUNCHER_FOLLOWUP_KEY = 'gpa_launcher_followup';
 
 function runPostGame2CelebrationThenRank() {
+  pauseBgMusic();
   runEndJourneyBar(async () => {
     let scholarship = false;
     try {

@@ -4,6 +4,7 @@ import { updatePlayerInput, standUp, tryInteract, setPlayerTarget } from './play
 import { getCamera } from './camera.js';
 import { getScene, toggleLamp } from './scene.js';
 import { updateCSS3DRendererSize, isEmbeddedGameActive, sendEmbeddedStartGame } from './embeddedGame.js';
+import { pauseBgMusic } from './ui.js';
 import * as THREE from 'three';
 import { handleMouseClick, isMouseVisible } from './mouse.js';
 
@@ -12,6 +13,7 @@ export function initInput(player, deskZone, bedZone, lampZone, zoneRadius) {
   window.addEventListener('keydown', (event) => {
     if (event.code === 'Home' && !isEmbeddedGameActive()) {
       event.preventDefault();
+      pauseBgMusic();
       try {
         sessionStorage.setItem('gpa_home_to_menu', '1');
       } catch (_) {}

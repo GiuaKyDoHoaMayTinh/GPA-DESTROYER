@@ -21,6 +21,7 @@
   <audio id="mouseRunSound" src="assets/audio/rat1.mp3" preload="auto"></audio>
   <audio id="mouseThreatenSound" src="assets/audio/rat3.mp3" preload="auto"></audio>
   <audio id="mouseChasedSound" src="assets/audio/rat2.mp3" preload="auto"></audio>
+  <audio id="bgMusic" src="../../assets/sounds/backmusicatroom.mp3" loop preload="auto"></audio>
 
   <div id="overlay">
     <div class="panel" id="hint">Đang khởi tạo…</div>
@@ -73,7 +74,7 @@
     import { initInput, initWindowResize } from './js/input.js';
     import { initPlayer, updatePlayerMovement, getActionState, setPlayerTarget, standUp } from './js/player.js';
     import { initMouse, updateMouseMovement } from './js/mouse.js';
-    import { initUI, updateHint } from './js/ui.js';
+    import { initUI, updateHint, playBgMusic } from './js/ui.js';
     import { CONFIG } from './js/utils.js';
     import { getCSS3DRenderer, updateCSS3DRendererSize, toggleEmbeddedGame } from './js/embeddedGame.js';
     import * as story from './js/storyFlow.js';
@@ -130,6 +131,7 @@
       
       if (player) {
         story.onModelsReady();
+        playBgMusic();
         console.log('🎮 Khởi tạo Input...');
         initInput(player, deskZone, bedZone, lampZone, Math.max(CONFIG.zoneRadius, CONFIG.lampRadius));
         initWindowResize(renderer, camera);
