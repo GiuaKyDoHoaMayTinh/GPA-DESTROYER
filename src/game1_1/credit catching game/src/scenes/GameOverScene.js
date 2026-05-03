@@ -14,6 +14,8 @@ export class GameOverScene extends Phaser.Scene {
         // Hiển thị background khác tuỳ theo kết quả
         const backgroundKey = this.isWin ? 'nextgame' : 'overscene';
         this.add.image(10, -50, backgroundKey).setOrigin(0, 0);
+        this.sound.stopAll();
+        this.sound.play(this.isWin ? 'win' : 'lose', { volume: 0.7 });
         
         // add in text or image button
         if (this.isWin) {
@@ -40,6 +42,8 @@ export class GameOverScene extends Phaser.Scene {
         const hubEmbed = typeof window !== 'undefined' && window.location.search.includes('hub=1');
 
         this.input.once('pointerdown', () => {
+            this.sound.stopAll();
+        this.sound.play('xtremefreddy-game-music-loop-5-144569', { loop: true, volume: 0.5 });
             if (hubEmbed && window.parent !== window) {
                 if (!this.isWin) {
                     this.cameras.main.fadeOut(400);
