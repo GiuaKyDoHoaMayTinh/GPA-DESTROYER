@@ -171,9 +171,10 @@ export function onModelsReady() {
     if (api.setPlayerTarget) {
       const p = api.getPlayer && api.getPlayer();
       if (p) {
-        p.position.set(0, 0, 3.2);
-        p.rotation.y = Math.PI;
-        api.setPlayerTarget(-1.0, 0, -0.6);
+        p.position.set(-3, 0, 3.5);
+        p.rotation.y = Math.PI/2;
+        // Nhân vật đứng yên khi vừa vào phòng (không tự động di chuyển)
+        // api.setPlayerTarget(-1.0, 0, -0.6);
       }
     }
   }
