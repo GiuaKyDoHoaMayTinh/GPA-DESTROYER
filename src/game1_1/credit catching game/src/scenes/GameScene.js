@@ -313,6 +313,7 @@ export class GameScene extends Phaser.Scene {
         const subjectIndex = this.subjectFrameNames.indexOf(frameName);
         sb.disableBody(true, true);
         if (this.gameIsOver) return;
+        this.sound.play('pop', { volume: 0.5 });
 
         if (subjectIndex !== -1) {
             const subjectMax = this.creditBoxes[subjectIndex].length * 2;

@@ -208,7 +208,7 @@ function loadMainModels(onComplete) {
     character.name = 'player';
     character.scale.set(0.9, 0.9, 0.9);
     character.position.set(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y, CONFIG.playerStartPos.z);
-    character.rotation.y = Math.PI;
+    character.rotation.y = Math.PI/2;
     scene.add(character);
     player = character;
     loadedCount++;
