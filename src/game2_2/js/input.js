@@ -10,6 +10,15 @@ import { handleMouseClick, isMouseVisible } from './mouse.js';
 export function initInput(player, deskZone, bedZone, lampZone, zoneRadius) {
   // Keyboard events (keep for E and Space)
   window.addEventListener('keydown', (event) => {
+    if (event.code === 'Home' && !isEmbeddedGameActive()) {
+      event.preventDefault();
+      try {
+        sessionStorage.setItem('gpa_home_to_menu', '1');
+      } catch (_) {}
+      window.location.href = new URL('../../index.html', window.location.href).href;
+      return;
+    }
+
     if (isEmbeddedGameActive()) {
       if (event.code === 'Enter' || event.code === 'NumpadEnter') {
         event.preventDefault();

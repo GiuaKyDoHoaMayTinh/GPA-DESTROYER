@@ -824,7 +824,37 @@
     }
   }
 
+  function runReverseJourney() {
+    showStage('playJourney');
+    var bar = document.getElementById('play-progress');
+    var fill = document.getElementById('play-progress-fill');
+    bar.hidden = false;
+    fill.style.width = '0%';
+    var duration = 2800;
+    var t0 = performance.now();
+    function step(now) {
+      var t = Math.min(1, (now - t0) / duration);
+      fill.style.width = Math.round(t * 100) + '%';
+      if (t < 1) requestAnimationFrame(step);
+      else {
+        bar.hidden = true;
+        fill.style.width = '0%';
+        showStage('menu');
+        updateMenuUserPill();
+        initMenuStage();
+      }
+    }
+    requestAnimationFrame(step);
+  }
+
   if (!tryConsumePostGame2Return()) {
+    try {
+      if (sessionStorage.getItem('gpa_home_to_menu') === '1') {
+        sessionStorage.removeItem('gpa_home_to_menu');
+        runReverseJourney();
+        return;
+      }
+    } catch (_) {}
     runLoading();
   }
 })();
