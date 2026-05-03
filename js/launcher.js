@@ -805,7 +805,14 @@
       playBusy = true;
       var bgm = document.getElementById('menu-bgm');
       if (bgm) bgm.pause();
-      setPlayJourneyDirection(true);
+      var isReturning = false;
+      try {
+        if (sessionStorage.getItem('gpa_returned_to_menu') === '1') {
+          sessionStorage.removeItem('gpa_returned_to_menu');
+          isReturning = true;
+        }
+      } catch (e) {}
+      setPlayJourneyDirection(false);
       showStage('playJourney');
       var bar = document.getElementById('play-progress');
       var fill = document.getElementById('play-progress-fill');
@@ -857,6 +864,9 @@
         showStage('menu');
         updateMenuUserPill();
         initMenuStage();
+        try {
+          sessionStorage.setItem('gpa_returned_to_menu', '1');
+        } catch (e) {}
       }
     }
     requestAnimationFrame(step);
