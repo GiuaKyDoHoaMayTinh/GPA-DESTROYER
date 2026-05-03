@@ -11,6 +11,14 @@ export class GameOverScene extends Phaser.Scene {
     }
 
     create() {
+         // Dừng nhạc nền, phát âm thanh thắng/thua
+        this.sound.stopAll();
+        if (this.isWin) {
+            this.sound.play('win', { volume: 0.8 });
+        } else {
+            this.sound.play('lose', { volume: 0.8 });
+        }
+
         // Hiển thị background khác tuỳ theo kết quả
         const backgroundKey = this.isWin ? 'nextgame' : 'overscene';
         this.add.image(10, -50, backgroundKey).setOrigin(0, 0);
@@ -37,36 +45,19 @@ export class GameOverScene extends Phaser.Scene {
             }).setOrigin(0.5);
         }
 
-        const hubEmbed = typeof window !== 'undefined' && window.location.search.includes('hub=1');
-
         this.input.once('pointerdown', () => {
-            if (hubEmbed && window.parent !== window) {
-                if (!this.isWin) {
-                    this.cameras.main.fadeOut(400);
-                    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-                        this.scene.start('GameScene');
-                    });
-                    return;
-                }
-                window.parent.postMessage(
-                    { type: 'gpaGame1Exit', score: this.score, isWin: true },
-                    '*'
-                );
-                return;
-            }
             this.cameras.main.fadeOut(500);
             this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+                this.sound.stopAll(); // dừng win/lose trước
+                this.sound.play('xtremefreddy-game-music-loop-5-144569', {
+                    volume: 0.3,
+                    loop: true
+                });
                 this.scene.start('GameScene');
             });
         });
 
         this.cameras.main.fadeIn(500);
-
-        if (typeof window.GPA_SCORE !== 'undefined' && typeof window.GPA_SCORE.postScore === 'function') {
-            window.GPA_SCORE.postScore('game1_1', this.score, { win: this.isWin }).catch(function (err) {
-                console.warn('[GPA_SCORE] game1_1:', err && err.message ? err.message : err);
-            });
-        }
     }
 
 }
