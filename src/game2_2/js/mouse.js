@@ -57,21 +57,21 @@ function clearThreatTimer() {
 function playMouseRunSound() {
   if (!mouseRunSound) return;
   mouseRunSound.currentTime = 0;
-  mouseRunSound.volume = 0.3;
+  mouseRunSound.volume = 1.0;
   mouseRunSound.play().catch(() => {});
 }
 
 function playMouseThreatenSound() {
   if (!mouseThreatenSound) return;
   mouseThreatenSound.currentTime = 0;
-  mouseThreatenSound.volume = 0.5;
+  mouseThreatenSound.volume = 1.0;
   mouseThreatenSound.play().catch(() => {});
 }
 
 function playMouseChasedSound() {
   if (!mouseChasedSound) return;
   mouseChasedSound.currentTime = 0;
-  mouseChasedSound.volume = 0.5;
+  mouseChasedSound.volume = 1.0;
   mouseChasedSound.play().catch(() => {});
 }
 
