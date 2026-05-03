@@ -68,7 +68,7 @@ export function initScene(width, height) {
 }
 
 function setupLighting() {
-  const ambientLight = new THREE.HemisphereLight(0xf0f0f5, 0xcccccc, 1.0);
+  const ambientLight = new THREE.HemisphereLight(0xf0f0f5, 0xcccccc, 1.7);
   scene.add(ambientLight);
 
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -78,7 +78,7 @@ function setupLighting() {
   fill.position.set(-6, 8, 6);
   scene.add(fill);
 
-  const sunlight = new THREE.DirectionalLight(0xfffcf0, 0.6);
+  const sunlight = new THREE.DirectionalLight(0xfffcf0, 1.2);
   sunlight.position.set(0, 12, -8);
   sunlight.castShadow = true;
   sunlight.shadow.camera.top = 10;
@@ -138,7 +138,7 @@ function loadModel(path, onLoad, onError) {
           if (child.name && child.name.includes('Cylinder001_1')||child.name === ('Habitacion002')) {
             const setTransparentMaterial = (material) => {
               material.transparent = true;
-              material.opacity = child.name === 'Habitacion002' ? 0.8 : 0.5;
+              material.opacity = child.name === 'Habitacion002' ? 0.8 : 1.0;
               material.side = THREE.DoubleSide;
               material.depthWrite = false;
               material.alphaTest = 0.01;
