@@ -2,10 +2,11 @@
 
 import { updatePlayerInput, standUp, tryInteract, setPlayerTarget } from './player.js';
 import { getCamera } from './camera.js';
-import { getScene, toggleLamp } from './scene.js';
+import { getScene, toggleLamp, playerMixer } from './scene.js'; // THÊM playerMixer
 import { updateCSS3DRendererSize, isEmbeddedGameActive, sendEmbeddedStartGame } from './embeddedGame.js';
 import * as THREE from 'three';
 import { handleMouseClick, isMouseVisible } from './mouse.js';
+import { showMessage } from './ui.js'; // THÊM showMessage nếu cần thông báo
 
 export function initInput(player, deskZone, bedZone, lampZone, zoneRadius) {
   // Keyboard events (keep for E and Space)
@@ -76,12 +77,41 @@ export function initInput(player, deskZone, bedZone, lampZone, zoneRadius) {
     // Nếu game embedded active, không handle click cho movement
     if (isEmbeddedGameActive()) return;
 
+    // --- PHẦN THÊM: LOGIC GIỚI HẠN CHẶN TƯỜNG ---
+    // Thay vì chỉ intersectPlane, ta intersectObjects để biết có click trúng tường không
+    const intersects = raycaster.intersectObjects(scene.children, true);
+    
+    if (intersects.length > 0) {
+      const hit = intersects[0];
+      const obj = hit.object;
+
+      // Lấy pháp tuyến mặt va chạm để xác định tường hay sàn
+      const normal = hit.face.normal.clone().applyMatrix3(
+        new THREE.Matrix3().getNormalMatrix(obj.matrixWorld)
+      ).normalize();
+
+      // Nếu click trúng mặt đứng (Tường/Vật cản)
+      if (Math.abs(normal.y) < 0.1) {
+        // Dịch điểm đích ra xa tường 1 khoảng để nhân vật không đâm đầu vào tường
+        const safePoint = hit.point.clone().addScaledVector(normal, 0.8);
+        setPlayerTarget(safePoint.x, 0, safePoint.z);
+        
+        // THÊM: Cập nhật mixer ngay để chuyển animation walk
+        if (playerMixer) playerMixer.update(0);
+        return;
+      }
+    }
+
+    // --- LOGIC GỐC CỦA BẠN (SÀN NHÀ) ---
     const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); // Y=0 plane
     const target = new THREE.Vector3();
     raycaster.ray.intersectPlane(plane, target);
 
     // Set player target to clicked position
     setPlayerTarget(target.x, 0, target.z);
+
+    // THÊM: Kích hoạt animation walk ngay lập tức
+    if (playerMixer) playerMixer.update(0);
   });
 }
 
