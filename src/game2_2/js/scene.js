@@ -39,7 +39,7 @@ export function updateDoorIntro(_delta) {}
 
 export function initScene(width, height) {
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xe8ecf2);
+  scene.background = new THREE.Color(0x7aa8c8);
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -68,15 +68,18 @@ export function initScene(width, height) {
 }
 
 function setupLighting() {
-  const ambientLight = new THREE.HemisphereLight(0xfff8f0, 0x8a9098, 0.95);
+  const ambientLight = new THREE.HemisphereLight(0xf0f0f5, 0xcccccc, 1.0);
   scene.add(ambientLight);
+
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.35;
 
   const fill = new THREE.DirectionalLight(0xeef4ff, 0.35);
   fill.position.set(-6, 8, 6);
   scene.add(fill);
 
-  const sunlight = new THREE.DirectionalLight(0xfff5e6, 1.15);
-  sunlight.position.set(4, 14, 2);
+  const sunlight = new THREE.DirectionalLight(0xfffcf0, 0.6);
+  sunlight.position.set(0, 12, -8);
   sunlight.castShadow = true;
   sunlight.shadow.camera.top = 10;
   sunlight.shadow.camera.bottom = -10;
@@ -117,10 +120,6 @@ function setupFloor() {
   floor.receiveShadow = true;
   scene.add(floor);
 
-  const grid = new THREE.GridHelper(90, 90, 0x667788, 0x334455);
-  grid.material.opacity = 0.15;
-  grid.material.transparent = true;
-  scene.add(grid);
 }
 
 function loadModel(path, onLoad, onError) {
@@ -136,10 +135,10 @@ function loadModel(path, onLoad, onError) {
           child.castShadow = true;
           child.receiveShadow = true;
 
-          if (child.name && child.name.includes('Cylinder001_1')) {
+          if (child.name && child.name.includes('Cylinder001_1')||child.name === ('Habitacion002')) {
             const setTransparentMaterial = (material) => {
               material.transparent = true;
-              material.opacity = 0.8;
+              material.opacity = child.name === 'Habitacion002' ? 0.8 : 0.5;
               material.side = THREE.DoubleSide;
               material.depthWrite = false;
               material.alphaTest = 0.01;
