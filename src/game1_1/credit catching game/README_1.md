@@ -2,7 +2,7 @@
 
 ## Mô Tả Game
 
-**Credit Catching Game** là một game hành động dựa trên Phaser 3, nơi người chơi phải bắt các bóng tín chỉ (credits) rơi xuống từ các môn học khác nhau bằng một cái thanh hứng.
+**Credit Catching Game** là một game hành động dựa trên Phaser Launcher, nơi người chơi phải bắt các bóng tín chỉ (credits) rơi xuống từ các môn học khác nhau bằng một cái thanh hứng.
 
 ### Mục Tiêu
 - Bắt được nhiều bóng tín chỉ từ các môn học khác nhau
