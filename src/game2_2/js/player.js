@@ -5,7 +5,7 @@ import { showMessage, updateHint, hideActionHint } from './ui.js';
 import { checkCollision, isNearDeskZone, isNearBedZone } from './collision.js';
 import { CONFIG } from './utils.js';
 import { toggleEmbeddedGame } from './embeddedGame.js';
-import { getMouseModel } from './scene.js';
+import { getMouseModel, playerMixer, playerAnimations, playerStandAnimations } from './scene.js'; // THÊM IMPORT
 import { shouldOpenEmbeddedWhenSitting, onPlayerSatDeskAfterPose } from './storyFlow.js';
 
 let actionState = 'walk';
@@ -14,7 +14,12 @@ let walkAnimationTime = 0;
 const walkAnimationSpeed = 6; // Tốc độ bobbing
 const PLAYER_DEBUG = true;
 
-let playerTarget = new THREE.Vector3(0, 0, 2.4); // Vị trí mục tiêu cho nhân vật
+// Thêm biến quản lý action hiện tại để fade
+let currentAction = null;
+let walkAction = null;
+
+// FIX LỖI 1: Thay đổi tọa độ cứng (0, 0, 2.4) thành vị trí mặc định từ CONFIG để không tự chạy khi vừa load
+let playerTarget = new THREE.Vector3();
 
 const keys = {
   w: false,
@@ -27,6 +32,24 @@ const keys = {
   arrowright: false,
 };
 
+// --- HÀM THÊM: Chuyển đổi animation mượt mà ---
+function fadeToAction(newAction, duration = 0.2) {
+  if (!newAction || currentAction === newAction) return;
+  
+  // Đảm bảo action mới được cấu hình đúng
+  newAction.reset()
+    .setEffectiveTimeScale(1)
+    .setEffectiveWeight(1)
+    .fadeIn(duration)
+    .play();
+
+  if (currentAction) {
+    currentAction.fadeOut(duration);
+  }
+  
+  currentAction = newAction;
+}
+
 function playerDebug(tag, extra = {}) {
   if (!PLAYER_DEBUG) return;
   console.log('[PLAYER_STATE]', tag, {
@@ -36,11 +59,14 @@ function playerDebug(tag, extra = {}) {
   });
 }
 
-export function initPlayer() {
+export function initPlayer(player) {
   actionState = 'walk';
   isMoving = false;
   walkAnimationTime = 0;
-  playerTarget.set(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y, CONFIG.playerStartPos.z);
+  if (player) {
+        // Ép mục tiêu trùng khít với vị trí thực tế của nhân vật lúc load
+        playerTarget.copy(player.position); 
+    }
   Object.keys(keys).forEach(key => keys[key] = false);
 }
 
@@ -62,22 +88,62 @@ export function updatePlayerInput(key, isPressed) {
   }
 }
 
+// Giữ API cũ nhưng cập nhật lại cách lấy walkAction từ playerAnimations
+export function setPlayerAnimationMixer(m, _unused) {
+  // Mixer giờ đã được khởi tạo bên scene.js và export qua playerMixer
+  if (playerAnimations && playerAnimations.length > 0) {
+    // Tìm animation đi bộ (thường có tên chứa 'walk' hoặc 'v001' tùy model)
+    const walkClip = playerAnimations.find(a => 
+      a.name.toLowerCase().includes('walk') || 
+      a.name.toLowerCase().includes('v001')
+    ) || playerAnimations[0];
+    
+    walkAction = playerMixer.clipAction(walkClip);
+  }
+}
+
 export function updatePlayerMovement(player, dt) {
   if (!player || actionState !== 'walk') {
     isMoving = false;
     return;
   }
 
+  // Cập nhật mixer để xương chuyển động (CỰC KỲ QUAN TRỌNG)
+  if (playerMixer) playerMixer.update(dt);
+
   const direction = new THREE.Vector3().subVectors(playerTarget, player.position);
   const distance = direction.length();
 
-  if (distance < 0.1) {
-    // Đã tới target, dừng
-    isMoving = false;
+  // TỰ ĐỘNG KHỞI TẠO WALK ACTION NẾU CHƯA CÓ
+  if (!walkAction && playerMixer && playerAnimations.length > 0) {
+    const walkClip = playerAnimations.find(a => 
+      a.name.toLowerCase().includes('walk') || 
+      a.name.toLowerCase().includes('v001')
+    ) || playerAnimations[0];
+    walkAction = playerMixer.clipAction(walkClip);
+  }
+
+  // KIỂM TRA DỪNG
+  if (distance < 0.15) {
+    if (isMoving) {
+      isMoving = false;
+      // Chuyển sang animation đứng yên (stand.glb)
+      if (playerMixer && playerStandAnimations.length > 0) {
+        fadeToAction(playerMixer.clipAction(playerStandAnimations[0]));
+      } else if (currentAction) {
+        currentAction.fadeOut(0.2); // Fallback nếu không có animation đứng
+      }
+    }
     return;
   }
 
+  // BẮT ĐẦU DI CHUYỂN
   isMoving = true;
+
+  // Chuyển sang animation đi bộ
+  if (walkAction) {
+    fadeToAction(walkAction);
+  }
 
   // Normalize direction
   direction.normalize();
@@ -93,11 +159,19 @@ export function updatePlayerMovement(player, dt) {
     .copy(player.position)
     .addScaledVector(move, speed * dt);
 
-  // Kiểm tra collision và clamping
-  const safePosition = checkCollision(newPosition, player.position);
-  player.position.copy(safePosition);
+  // Kiểm tra collision - Truyền thêm bán kính va chạm (0.7) để chặn đâm xuyên tường hiệu quả hơn
+  const safePosition = checkCollision(newPosition, player.position, 0.7);
+  
+  // FIX LỖI 2: Nếu bị kẹt (vị trí an toàn bằng vị trí cũ), ép playerTarget về vị trí hiện tại để dừng hẳn
+  if (safePosition.distanceTo(player.position) < 0.01 && distance > 0.2) {
+    playerTarget.copy(player.position);
+    if (playerMixer && playerStandAnimations.length > 0) {
+      fadeToAction(playerMixer.clipAction(playerStandAnimations[0]));
+    }
+    isMoving = false;
+  }
 
-  // Cập nhật animation đi bộ (bỏ bobbing)
+  player.position.copy(safePosition);
   walkAnimationTime += dt * walkAnimationSpeed;
 }
 
@@ -114,8 +188,15 @@ export function setPlayerPose(player, position, rotationY, stateText, rotationX 
   actionState = stateText;
   isMoving = false;
   walkAnimationTime = 0;
+  // Cập nhật target khi thay đổi tư thế để không bị lỗi giật vị trí khi đứng dậy
+  playerTarget.copy(position);
 
-  // Toggle embedded game khi ngồi bàn (theo kịch bản — lần đầu chỉ hướng dẫn + game1)
+  // Dừng mọi animation khi ngồi/nằm
+  if (currentAction) {
+    currentAction.fadeOut(0.1);
+    currentAction = null;
+  }
+
   if (stateText === 'sit') {
     const openEmbedded = shouldOpenEmbeddedWhenSitting();
     toggleEmbeddedGame(openEmbedded);
@@ -143,9 +224,7 @@ export function sitAtDesk(player, deskZone) {
     if (mouseModel) {
       mouse.showMouseOnMesa(mouseModel);
     }
-  }).catch(() => {
-    // ignore if mouse module not available
-  });
+  }).catch(() => {});
 }
 
 export function lieOnBed(player, bedZone) {
@@ -182,7 +261,6 @@ export function standUp(player, deskZone, bedZone) {
   player.rotation.set(0, rotationY, 0);
   playerTarget.copy(newPos);
   
-  // Tắt embedded game khi đứng dậy
   toggleEmbeddedGame(false);
   window.dispatchEvent(new CustomEvent('force-camera-default'));
   
@@ -190,6 +268,12 @@ export function standUp(player, deskZone, bedZone) {
   isMoving = false;
   walkAnimationTime = 0;
   hideActionHint();
+
+  // Khi đứng dậy thì phát ngay animation idle (đứng yên)
+  if (playerMixer && playerStandAnimations.length > 0) {
+    fadeToAction(playerMixer.clipAction(playerStandAnimations[0]));
+  }
+
   playerDebug('standUp:completed', {
     x: newPos.x,
     y: newPos.y,
@@ -202,9 +286,7 @@ export function standUp(player, deskZone, bedZone) {
     if (mouseModel) {
       mouse.hideMouse(mouseModel);
     }
-  }).catch(() => {
-    // ignore if mouse module not available
-  });
+  }).catch(() => {});
 }
 
 export function tryInteract(player, deskZone, bedZone) {
