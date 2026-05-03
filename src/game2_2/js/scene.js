@@ -5,12 +5,19 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { showMessage, setModelLoadProgress, clearModelLoadProgress, setDoorIntroHint } from './ui.js';
 import { CONFIG } from './utils.js';
 import { initEmbeddedGame } from './embeddedGame.js';
+import { addObstacle } from './collision.js'; // THÊM IMPORT để đăng ký va chạm
+import { initPlayer } from './player.js';
 
 let scene, renderer, loader;
 let player = null;
 let mouseModel = null;
 let lampLight = null;
 let lampOn = false;
+
+// --- THÊM: Các biến quản lý animation ---
+export let playerMixer = null;
+export let playerAnimations = [];
+export let playerStandAnimations = [];
 
 function shouldDoorIntro() {
   try {
@@ -119,7 +126,6 @@ function setupFloor() {
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
   scene.add(floor);
-
 }
 
 function loadModel(path, onLoad, onError) {
@@ -130,12 +136,16 @@ function loadModel(path, onLoad, onError) {
     (gltf) => {
       console.log('✅ Tải thành công:', path);
       const model = gltf.scene;
+      
+      // Lấy animations từ gltf
+      const animations = gltf.animations; 
+
       model.traverse((child) => {
         if (child.isMesh) {
           child.castShadow = true;
           child.receiveShadow = true;
 
-          if (child.name && child.name.includes('Cylinder001_1')||child.name === ('Habitacion002')) {
+          if (child.name && (child.name.includes('Cylinder001_1') || child.name === 'Habitacion002')) {
             const setTransparentMaterial = (material) => {
               material.transparent = true;
               material.opacity = child.name === 'Habitacion002' ? 0.8 : 1.0;
@@ -156,7 +166,8 @@ function loadModel(path, onLoad, onError) {
           }
         }
       });
-      onLoad(model);
+      // Trả về cả model và animations
+      onLoad(model, animations);
     },
     (progressEvent) => {
       if (progressEvent.lengthComputable) {
@@ -177,6 +188,12 @@ function loadModel(path, onLoad, onError) {
 
 function loadMainModels(onComplete) {
   let loadedCount = 0;
+  const TOTAL_MODELS = 4;
+
+  const checkComplete = () => {
+    loadedCount++;
+    if (loadedCount === TOTAL_MODELS) onComplete();
+  };
 
   loadModel('assets/models/room3d.glb', (room) => {
     room.scale.set(1.1, 1.1, 1.1);
@@ -186,36 +203,55 @@ function loadMainModels(onComplete) {
     let screenMesh = null;
     room.traverse((child) => {
       if (child.isMesh) {
-        console.log('Tìm thấy mesh:', child.name);
+        // --- LOGIC VA CHẠM TỰ ĐỘNG ---
+        // Danh sách các từ khóa tên object trong GLB cần tính va chạm
+        const obstacleKeywords = ['bed', 'desk', 'table', 'closet', 'wall', 'habita', 'bur'];
+        const nameLower = child.name.toLowerCase();
+        
+        if (obstacleKeywords.some(key => nameLower.includes(key))) {
+            // Tạo Bounding Box chính xác cho từng mảnh model
+            const box = new THREE.Box3().setFromObject(child);
+            addObstacle(box); // Đưa vào danh sách kiểm tra trong collision.js
+        }
+
         if (child.name === 'Cube018_1') {
           screenMesh = child;
-          console.log('✅ Tìm thấy màn hình:', child.name);
         }
       }
     });
 
     if (screenMesh) {
       initEmbeddedGame(scene, screenMesh);
-    } else {
-      console.warn('⚠️ Không tìm thấy Cube018_1, game embedded sẽ không hoạt động');
     }
-
-    loadedCount++;
-    if (loadedCount === 3) onComplete();
+    checkComplete();
   });
 
-  function addPlayer(character) {
+ // Trong file scene.js, tại hàm addPlayer
+function addPlayer(character, animations) {
     character.name = 'player';
-    character.scale.set(0.9, 0.9, 0.9);
-    character.position.set(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y, CONFIG.playerStartPos.z);
-    character.rotation.y = Math.PI;
+    // ... các thiết lập scale, position khác của bạn
     scene.add(character);
     player = character;
-    loadedCount++;
-    if (loadedCount === 3) onComplete();
-  }
+    
+    playerMixer = new THREE.AnimationMixer(character);
+    playerAnimations = animations;
+    
+    // FIX QUAN TRỌNG: Truyền character vào để Target trùng khít vị trí ban đầu
+    initPlayer(character); 
+    
+    checkComplete(); // Dòng này cực kỳ quan trọng để thanh load biến mất
+}
 
-  loadModel('assets/models/CharKL.glb', (character) => addPlayer(character));
+  loadModel('assets/models/CharKL.glb', (character, animations) => {
+    addPlayer(character, animations);
+    initPlayer(character); // Truyền nhân vật vào đây để lấy vị trí chuẩn
+});
+
+  // Tải file stand.glb để lấy animation đứng yên
+  loadModel('assets/models/stand.glb', (model, animations) => {
+    playerStandAnimations = animations;
+    checkComplete();
+  });
 
   loadModel('assets/models/Mice.glb', (mouse) => {
     mouseModel = mouse;
@@ -225,8 +261,7 @@ function loadMainModels(onComplete) {
     mouseModel.visible = false;
     mouseModel.name = 'Chuột_Phá_Hoại';
     scene.add(mouseModel);
-    loadedCount++;
-    if (loadedCount === 3) onComplete();
+    checkComplete();
   });
 }
 
@@ -284,16 +319,11 @@ function playDoorIntroVideo(onComplete, viewCamera) {
 
   video.addEventListener('ended', finishDoorIntro, { once: true });
   video.addEventListener('error', () => {
-    console.warn(
-      '[scene] Video intro lỗi — MKV/H.264 có thể không được mọi trình duyệt hỗ trợ. Thử xuất MP4 (H.264):',
-      DOOR_VIDEO_PATH
-    );
     finishDoorIntro();
   });
 
   stallTimer = setTimeout(() => {
     if (!done && video.readyState < 2) {
-      console.warn('[scene] Video intro không tải kịp — bỏ qua.');
       finishDoorIntro();
     }
   }, 15000);
@@ -306,7 +336,6 @@ function playDoorIntroVideo(onComplete, viewCamera) {
       video
         .play()
         .catch((e) => {
-          console.warn('[scene] play intro:', e);
           video.muted = true;
           video.play().catch(() => finishDoorIntro());
         });
