@@ -113,6 +113,19 @@
     stages[id].classList.add('active');
   }
 
+  function setPlayJourneyDirection(homeToSchool) {
+    var caption = document.querySelector('.play-journey-caption');
+    var icons = document.querySelector('.play-progress-icons');
+    if (caption) {
+      caption.textContent = homeToSchool ? 'Từ nhà → đến trường' : 'Từ trường → về nhà';
+    }
+    if (icons) {
+      icons.innerHTML = homeToSchool
+        ? '<img src="assets/2D/iconofhouse.png" alt="" /><img src="assets/2D/iconofchar2.png" alt="" /><img src="assets/2D/iconofschool.png" alt="" />'
+        : '<img src="assets/2D/iconofschool.png" alt="" /><img src="assets/2D/iconofchar2.png" alt="" /><img src="assets/2D/iconofhouse.png" alt="" />';
+    }
+  }
+
   function getUsedGuestNames() {
     try {
       var raw = localStorage.getItem(STORAGE_GUEST_NAMES);
@@ -792,6 +805,7 @@
       playBusy = true;
       var bgm = document.getElementById('menu-bgm');
       if (bgm) bgm.pause();
+      setPlayJourneyDirection(true);
       showStage('playJourney');
       var bar = document.getElementById('play-progress');
       var fill = document.getElementById('play-progress-fill');
@@ -825,6 +839,7 @@
   }
 
   function runReverseJourney() {
+    setPlayJourneyDirection(true);
     showStage('playJourney');
     var bar = document.getElementById('play-progress');
     var fill = document.getElementById('play-progress-fill');
