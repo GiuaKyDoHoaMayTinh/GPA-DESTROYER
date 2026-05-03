@@ -87,6 +87,7 @@ document.querySelector('.game-screen').addEventListener('click', function(event)
 window.addEventListener('message', function(event) {
     embedDebug('window:message', { type: event.data && event.data.type ? event.data.type : 'unknown' });
     if (!event.data || typeof event.data.type !== 'string') return;
+    if (!gameActive) return;
 
     if (event.data.type === 'embedStartGame') {
         if (!gameStarted) {
@@ -95,22 +96,22 @@ window.addEventListener('message', function(event) {
         return;
     }
 
-    if (event.data.type === 'focusInput') {
-        if (!gameActive) return;
-
-        const answerEl = document.getElementById('answer');
-        if (answerEl) {
-            answerEl.focus();
-            const end = answerEl.value.length;
-            answerEl.setSelectionRange(end, end);
-        }
+    const answerEl = document.getElementById('answer');
+    if (answerEl) {
+        answerEl.focus();
+        // Di chuyển cursor tới cuối text
+        const end = answerEl.value.length;
+        answerEl.setSelectionRange(end, end);
     }
 });
 
+window.parent.postMessage({
+  type: 'gameOver'
+}, '*');
+
+
 window.addEventListener('message', (event) => {
   if (event.data?.type === 'MOUSE_BLACKOUT_ON') {
-    // Trong iframe màn máy tính: blackout che hết game gõ từ — coi là lỗi UX, bỏ qua
-    if (window.parent !== window) return;
     document.getElementById('blackout')?.classList.add('active');
   }
 
