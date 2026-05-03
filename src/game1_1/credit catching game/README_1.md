@@ -2,20 +2,19 @@
 
 ## Mô Tả Game
 
-**Credit Catching Game** là một game hành động dựa trên Phaser Launcher, nơi người chơi phải bắt các bóng tín chỉ (credits) rơi xuống từ các môn học khác nhau bằng một cái thanh hứng.
+**Credit Catching Game** là một game hành động dựa trên Phaser Launcher, nơi người chơi phải hứng các bóng tín chỉ (credits) rơi xuống từ các vị trí khác nhau bằng một cái thanh hứng.
 
 ### Mục Tiêu
-- Bắt được nhiều bóng tín chỉ từ các môn học khác nhau
+- Hứng được nhiều bóng tín chỉ từ các môn học khác nhau
 - Thu thập điểm thưởng từ các bóng đặc biệt
-- Tránh bỏ lỡ các bóng rơi
 
 ---
 
 ## 🎮 Cách Chơi
 
 ### Điều Khiển
-- **Phím Mũi Tên Trái/Phải**: Di chuyển thanh sang trái/phải
 - **Nhấp Chuột**: Bắt đầu game từ menu
+- **Phím Mũi Tên Trái/Phải**: Di chuyển thanh sang trái/phải
 
 ### Các Môn Học (Subjects)
 Có 5 môn học trong game, mỗi môn có số lượng tín chỉ khác nhau:
@@ -32,12 +31,12 @@ Có 5 môn học trong game, mỗi môn có số lượng tín chỉ khác nhau:
 
 ### Loại Bóng
 
-#### Bóng Thường (Regular Credits)
-- Bóng từ từng môn học
+#### Bóng Tín Chỉ
+- Bóng tương ứng với từng môn học
 - Bắt được 2 quả = +1 tín chỉ cho môn đó
 
 #### Bóng Thưởng (Bonus Balls)
-- **⏱️ Bóng Thời Gian (Time Ball)**: Tăng thời gian chơi
+- **⏱️ Bóng Thời Gian (Time Ball)**: Tăng thời gian chơi thêm 5s
 - **📶 Bóng WiFi (WiFi Ball)**: Hiệu ứng đặc biệt, đứng màn hình
 
 ---
@@ -60,8 +59,8 @@ Có 5 môn học trong game, mỗi môn có số lượng tín chỉ khác nhau:
 - Phát nhạc nền
 
 ### 2️⃣ CountdownScene (Màn Hình Đếm Ngược)
-- Đếm ngược 5 -> 4 -> 3 → 2 → 1 trước khi bắt đầu
-- Chuẩn bị người chơi
+- Đếm ngược 5 → 1 trước khi bắt đầu
+- Để người chơi chuẩn bị sẵn sàng
 
 ### 3️⃣ GameScene (Màn Hình Chơi Chính)
 - Hiển thị các bóng rơi
@@ -70,7 +69,8 @@ Có 5 môn học trong game, mỗi môn có số lượng tín chỉ khác nhau:
 - Phát âm thanh khi bắt bóng (pop sound)
 
 ### 4️⃣ GameOverScene (Màn Hình Kết Thúc)
-- Hiển thị kết quả cuối cùng
+- Nếu thua thì sẽ chuyển sang màn hình thua, và hiển thị nút 'Chơi lại'
+- Nếu thắng, hiển thị kết quả cuối cùng
 - Nút "Tiếp Tục" (Next Game)
 
 ---
@@ -126,9 +126,9 @@ credit catching game/
 ## 🔊 Âm Thanh
 
 - **Nhạc Nền**: Phát lặp lại suốt game (volume: 0.5)
-- **Sound Effect**: Âm thanh "pop" khi bắt bóng
-                    Âm thanh 'lose.mp3' khi thua
-                    Âm thanh 'win.mp3' khi thắng
+- **Sound Effect**: Âm thanh "pop" khi bắt bóng,
+                    Âm thanh 'lose.mp3' khi thua,
+                    Âm thanh 'win.mp3' khi thắng.
 
 ---
 
@@ -136,7 +136,7 @@ credit catching game/
 
 - **Điểm Ban Đầu**: 80
 - **Điểm Cộng**: Tính từ các bóng thưởng
-- **Trạng Thái Bàn**: Theo dõi tín chỉ đã bắt được cho mỗi môn học
+- **Trạng Thái ô tín chỉ**: Theo dõi tín chỉ đã bắt được cho mỗi môn học
 
 ---
 
@@ -148,7 +148,7 @@ credit catching game/
 
 ## 🚀 Cách Chạy Game
 
-1. Mở `index.html` trong trình duyệt web
+1. Mở `index.html` bằng Live Server trong trình duyệt web
 2. Đợi các asset tải xong
 3. Nhấp chuột bắt đầu
 4. Đếm ngược 5 → 1
@@ -158,7 +158,7 @@ credit catching game/
 
 ## 📝 Ghi Chú
 
-- Game sử dụng **Phaser 3** framework
+- Game sử dụng framework: **Phaser 3**
 - Hỗ trợ **Arcade Physics** cho vật lý và va chạm
 - Âm thanh và hình ảnh được tối ưu hóa cho hiệu suất
 
@@ -167,5 +167,5 @@ credit catching game/
 **Tác Giả**: GPA-DESTROYER Team  
 **Ngôn Ngữ**: JavaScript (ES6+)  
 **Framework**: Phaser 3  
-**Trạng Thái**: Đang Phát Triển 🚧
+**Trạng Thái**: Đã hoàn thành ✅
 
