@@ -2,35 +2,32 @@
 
 ## 🎮 Mô Tả Game
 
-**English Typing Game** là một trò chơi tập luyện gõ phím tiếng Anh, nơi người chơi phải gõ đúng các từ được hiển thị trên màn hình trong vòng **90 giây**. Mỗi từ được gõ đúng sẽ cộng điểm, và các từ khó hơn sẽ được cộng điểm nhiều hơn.
+**English Typing Game** là một trò chơi gõ phím tiếng Anh, nơi người chơi phải gõ đúng các từ được hiển thị trên màn hình trong vòng **90 giây**. Mỗi từ được gõ đúng sẽ cộng điểm, và các từ khó hơn sẽ được cộng nhiều điểm hơn.
 
 ---
 
 ## 🎯 Cách Chơi
 
 ### Điều Khiển
-- **Nhấn Enter** hoặc **Click vào nút Start**: Bắt đầu game
+- **Nhấn Enter**: Bắt đầu game
 - **Gõ từ hiển thị** vào ô input
-- **Nhấn Enter** (sau khi gõ đúng): Xác nhận từ hoặc tự động kiểm tra khi gõ
-- **Space** (khi trong iframe): Thoát game
+- **Space** (khi trong iframe ở game 3D): Thoát game
 - Tránh **Copy-Paste** (chức năng này bị khóa)
 
-### 3 Màn Hình Chính
+### Ba Màn Hình Chính
 
 #### 1️⃣ Start Screen (Màn Hình Bắt Đầu)
 - Hiển thị nút **Play** 
-- Nhấn **Enter** hoặc click nút để bắt đầu
-- Hiển thị hướng dẫn "Nhấn Enter để bắt đầu chơi"
+- Nhấn **Enter** để bắt đầu
+- Hiển thị hướng dẫn "Nhấn Enter để bắt đầu chơi" cho game 3D
 
 #### 2️⃣ Game Screen (Màn Hình Chơi)
 - Hiển thị từ hiện tại cần gõ
 - Ô input để người chơi nhập từ
 - **Stats Panel** ở trên (điểm và thời gian còn lại)
-- Từ **super khó** được tô sáng với kiểu CSS đặc biệt
 
 #### 3️⃣ End Screen (Màn Hình Kết Thúc)
 - Hiển thị điểm cuối cùng
-- Click để quay lại màn hình bắt đầu
 
 ---
 
@@ -68,9 +65,9 @@
 - **Nhận dạng**: Có kiểu CSS đặc biệt (extreme-word class)
 - **Giá trị**: 5 điểm
 - Ví dụ:
-  - `pneumonoultramicroscopicsilicovolcanoconiosis` (từ dài nhất tiếng Anh)
-  - `hippopotomonstrosesquippedaliophobia` (sợ các từ dài)
-  - `supercalifragilisticexpialidocious` (từ trong phim Mary Poppins)
+  - `pneumonoultramicroscopicsilicovolcanoconiosis` 
+  - `hippopotomonstrosesquippedaliophobia` 
+  - `supercalifragilisticexpialidocious` 
 
 ### 🔊 Âm Thanh
 - **Success Sound**: Âm thanh `pop` phát khi gõ đúng từ
@@ -80,8 +77,8 @@
 
 ### 🚫 Tính Năng Bảo Mật
 - **Chặn Copy-Paste** vào input field
-- **Auto-focus** input khi click vào game-screen
-- **Refocus** tự động nếu focus bị mất
+- **Auto-focus** input khi click vào game-screen ở game 3D
+- **Refocus** tự động nếu focus bị mất ở game 3D
 - **Blackout layer**: Có thể tối nền (nhận message từ parent)
 
 ---
@@ -101,7 +98,6 @@ game2_1/
 │   │   └── custom-play-button.webp  # Nút bắt đầu
 │   └── audio/
 │       └── success.mp3     # Âm thanh khi gõ đúng
-├── update.js              # File update (chức năng không rõ)
 └── README_21.md          # File tài liệu này
 ```
 
@@ -167,7 +163,7 @@ returnToStart()     // Quay về màn hình bắt đầu
 ## 🔄 Luồng Game
 
 1. **Start**: Hiện màn hình bắt đầu
-2. **Enter/Click**: Gọi `startGame()`
+2. **Enter**: Gọi `startGame()`
    - Reset score, time, flags
    - Chọn 1 từ extreme ngẫu nhiên
    - Hiện game-screen & stats panel
@@ -182,7 +178,7 @@ returnToStart()     // Quay về màn hình bắt đầu
    - Ẩn game-screen, hiện end-screen
    - Hiển thị final score
    - Post message đến parent (game2_2)
-   - Gửi score đến server (nếu có)
+   - Gửi score đến server
 6. **End**: Click end-screen để quay lại start
 
 ---
@@ -209,10 +205,10 @@ window.addEventListener('message', (event) => {
 
 ## 📝 Ghi Chú & Chi Tiết
 
-### Từ Extreme - Câu Chuyện Thú Vị
-- **Từ dài nhất tiếng Anh**: `pneumonoultramicroscopicsilicovolcanoconiosis` (45 chữ)
-- **Sợ các từ dài**: `hippopotomonstrosesquippedaliophobia` (36 chữ)
-- **Mary Poppins**: `supercalifragilisticexpialidocious` (34 chữ)
+### Từ Extreme 
+- `pneumonoultramicroscopicsilicovolcanoconiosis` (45 chữ)
+- `hippopotomonstrosesquippedaliophobia` (36 chữ)
+- `supercalifragilisticexpialidocious` (34 chữ)
 - Những từ này cực kỳ khó gõ nhưng chỉ xuất hiện lần thứ 2
 
 ### Ưu Tiên Lựa Chọn Từ
@@ -234,7 +230,7 @@ window.addEventListener('message', (event) => {
 
 ### Cách 1: Trực tiếp
 ```bash
-# Mở index.html trong trình duyệt
+# Mở index.html bằng Live Server trong trình duyệt
 open index.html
 ```
 
@@ -242,58 +238,6 @@ open index.html
 - Game2_2 sẽ load game2_1 trong một `<iframe>`
 - Giao tiếp qua postMessage
 
----
-
-## 🛠️ Chỉnh Sửa & Mở Rộng
-
-### Thêm Từ Mới
-```javascript
-// js/words.js
-const words = [
-  'apple', 'banana', ... 'mynewword'
-];
-```
-
-### Thay Đổi Thời Gian
-```javascript
-// js/game.js
-timeLeft = 120; // Thay từ 90 thành 120
-```
-
-### Thêm Từ Khó Mới
-```javascript
-// js/words.js
-const hardWords = new Set([
-  'existing', 'mynewword' // Thêm từ mới
-]);
-```
-
-### Tùy Chỉnh Điểm
-```javascript
-// js/game.js
-if (extremeHardWords.has(currentWord)) {
-  pointsToAdd = 5;  // Thay đổi điểm
-}
-```
-
-### Sửa CSS
-```css
-/* css/styles.css */
-.extreme-word {
-  color: red;           /* Thay màu */
-  font-weight: bold;    /* Thay style */
-}
-```
-
----
-
-## ⚠️ Lưu Ý Quan Trọng
-
-✅ **Đã cấu hình**: Chặn paste, auto-focus, blackout, postMessage  
-✅ **Âm thanh**: Phát khi gõ đúng (không gây lỗi nếu thất bại)  
-✅ **Từ Extreme**: Được chọn ngẫu nhiên mỗi game, xuất hiện lần 2  
-✅ **Debug Mode**: Có EMBED_DEBUG = true để theo dõi sự kiện  
-✅ **Score Server**: Gửi score đến GPA_SCORE.postScore() nếu khả dụng
 
 ---
 
