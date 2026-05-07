@@ -238,15 +238,15 @@ function checkInput() {
         let pointsToAdd = 0;
         
         if (extremeHardWords.has(currentWord)) {
-            pointsToAdd = 5;
+            pointsToAdd = 30;
             metExtremeHard = true;
         } else if (superHardWords.has(currentWord)) {
-            pointsToAdd = 3;
+            pointsToAdd = 9;
             metSuperHard = true;
         } else if (hardWords.has(currentWord)) {
-            pointsToAdd = 2;
+            pointsToAdd = 6;
         } else {
-            pointsToAdd = 1;
+            pointsToAdd = 3;
         }
         
         score += pointsToAdd;
