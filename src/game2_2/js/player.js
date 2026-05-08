@@ -7,6 +7,7 @@ import { CONFIG } from './utils.js';
 import { toggleEmbeddedGame } from './embeddedGame.js';
 import { getMouseModel } from './scene.js';
 import { shouldOpenEmbeddedWhenSitting, onPlayerSatDeskAfterPose } from './storyFlow.js';
+import * as mouseModule from './mouse.js';
 
 let actionState = 'walk';
 let isMoving = false;
@@ -186,6 +187,13 @@ export function standUp(player, deskZone, bedZone) {
   
   // Tắt embedded game khi đứng dậy
   toggleEmbeddedGame(false);
+  
+  // Dừng chuột khi đứng dậy
+  const mouseModel = getMouseModel();
+  if (mouseModel) {
+    mouseModule.stopMouseLifecycle(mouseModel);
+  }
+  
   window.dispatchEvent(new CustomEvent('force-camera-default'));
   
   actionState = 'walk';
