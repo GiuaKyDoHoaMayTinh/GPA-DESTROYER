@@ -1,7 +1,7 @@
 // mouse.js - Quản lý animation và AI chuột
 
 import * as THREE from 'three';
-import { getScene } from './scene.js';
+import { getScene, getRenderer } from './scene.js';
 
 const tableX = -4.47;
 const tableY = 2;
@@ -9,7 +9,7 @@ const minZ = -3.5;
 const maxZ = 0.4;
 const mouseSpeed = 2;
 const chasedSpeed = mouseSpeed + 3; // Tốc độ khi bị đuổi
-const chatBoxTargetPos = new THREE.Vector3(-4.413, 2.5, 0.6); // Vị trí hiển thị khungchat
+const chatBoxTargetPos = new THREE.Vector3(-5.313, 2.5, 0.6); // Vị trí hiển thị khungchat
 
 
 let mouseTarget = new THREE.Vector3(tableX, tableY, maxZ);
@@ -26,6 +26,7 @@ let mouseThreatenSound = null;
 let mouseChasedSound = null;
 let chatBoxSprite = null;
 let chatBoxTexture = null;
+let chatBoxAspect = 1;
 let isFirstMouseAppearance = true;
 
 export function initMouse() {
@@ -48,7 +49,19 @@ export function initMouse() {
   textureLoader.load(
     '../../assets/2D/khungchat.png',
     (texture) => {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.magFilter = THREE.LinearFilter;
+      texture.minFilter = THREE.LinearFilter;
+      texture.generateMipmaps = false;
+      const renderer = getRenderer();
+      if (renderer) {
+        texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      }
+      texture.needsUpdate = true;
       chatBoxTexture = texture;
+      if (texture.image && texture.image.width && texture.image.height) {
+        chatBoxAspect = texture.image.width / texture.image.height;
+      }
     },
     undefined,
     (error) => {
@@ -217,10 +230,20 @@ export function updateMouseMovement(mouseModel, dt) {
       
       // Hiển thị khungchat khi chuột dừng lại ở ổ điện
       if (isFirstMouseAppearance && chatBoxTexture) {
-        const material = new THREE.SpriteMaterial({ map: chatBoxTexture });
+        const material = new THREE.SpriteMaterial({
+          map: chatBoxTexture,
+          transparent: true,
+          depthTest: false,
+          depthWrite: false,
+        });
         chatBoxSprite = new THREE.Sprite(material);
-        chatBoxSprite.scale.set(1, 1, 1);
+        chatBoxSprite.center.set(0.82, 0.77);
+        chatBoxSprite.scale.set(2 * chatBoxAspect, 2, 1);
         chatBoxSprite.position.copy(chatBoxTargetPos);
+        chatBoxSprite.position.x += 0.25;
+        chatBoxSprite.position.y += 0.45;
+        chatBoxSprite.position.z += 0.05;
+        chatBoxSprite.renderOrder = 999;
         try {
           getScene().add(chatBoxSprite);
         } catch (e) {
