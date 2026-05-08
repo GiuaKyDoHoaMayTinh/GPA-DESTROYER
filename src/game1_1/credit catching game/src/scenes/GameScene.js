@@ -331,6 +331,7 @@ export class GameScene extends Phaser.Scene {
             }
 
             const allCreditsFilled = this.subjectBallCount.every((count, index) => count >= this.creditBoxes[index].length * 2);
+            // const allCreditsFilled = true;
             if (allCreditsFilled) {
                 this.finishGame(true);
             }

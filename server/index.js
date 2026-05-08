@@ -162,16 +162,29 @@ app.get('/api/leaderboards/:gameId', (req, res) => {
   if (gameId === 'combined') {
     const rows = db
       .prepare(
-        `WITH per_user AS (
+        `WITH final_total AS (
+           SELECT user_id, MAX(score) AS best
+           FROM scores
+           WHERE game_id = 'game2_2'
+           GROUP BY user_id
+         ),
+         legacy_total AS (
            SELECT user_id,
-             MAX(CASE WHEN game_id = 'game1_1' THEN score END) AS g1,
-             MAX(CASE WHEN game_id = 'game2_1' THEN score END) AS g2
+             (COALESCE(MAX(CASE WHEN game_id = 'game1_1' THEN score END), 0) +
+              COALESCE(MAX(CASE WHEN game_id = 'game2_1' THEN score END), 0)) AS best
            FROM scores
            WHERE game_id IN ('game1_1', 'game2_1')
            GROUP BY user_id
+         ),
+         per_user AS (
+           SELECT f.user_id, f.best FROM final_total f
+           UNION ALL
+           SELECT l.user_id, l.best
+           FROM legacy_total l
+           WHERE NOT EXISTS (SELECT 1 FROM final_total f WHERE f.user_id = l.user_id)
          )
          SELECT COALESCE(NULLIF(TRIM(u.display_name), ''), u.username) AS label,
-           (COALESCE(p.g1, 0) + COALESCE(p.g2, 0)) AS best
+           p.best AS best
          FROM per_user p
          JOIN users u ON u.id = p.user_id
          ORDER BY best DESC

@@ -65,12 +65,6 @@ export class GameOverScene extends Phaser.Scene {
         });
 
         this.cameras.main.fadeIn(500);
-
-        if (typeof window.GPA_SCORE !== 'undefined' && typeof window.GPA_SCORE.postScore === 'function') {
-            window.GPA_SCORE.postScore('game1_1', this.score, { win: this.isWin }).catch(function (err) {
-                console.warn('[GPA_SCORE] game1_1:', err && err.message ? err.message : err);
-            });
-        }
     }
 
 }
