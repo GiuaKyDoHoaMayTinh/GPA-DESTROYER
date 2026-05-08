@@ -7,6 +7,7 @@ import { isEmbeddedGameActive, getEmbeddedGameWindow } from './embeddedGame.js';
 import { playBgMusic, pauseBgMusic, showMessage } from './ui.js';
 const STORY_KEY = 'gpa_g2_story_phase';
 const SESSION_PLAYER = 'gpa_current_player';
+const PENDING_SCORE_KEY = 'gpa_g2_pending_scores';
 
 const PHASE = {
   INTRO_WALK: 'intro_walk',
@@ -151,7 +152,52 @@ function getPlayerDisplayName() {
   }
 }
 
-/** Hạng người chơi trên bảng tổng (điểm cao nhất ĐKTC + điểm cao nhất Jerry). */
+function getPendingScores() {
+  try {
+    const raw = sessionStorage.getItem(PENDING_SCORE_KEY);
+    if (!raw) return { game1Score: 0 };
+    const parsed = JSON.parse(raw);
+    const game1Score = Number(parsed && parsed.game1Score);
+    return { game1Score: Number.isFinite(game1Score) && game1Score > 0 ? Math.floor(game1Score) : 0 };
+  } catch (_) {
+    return { game1Score: 0 };
+  }
+}
+
+function setPendingGame1Score(score) {
+  const safeScore = Math.max(0, Math.floor(Number(score) || 0));
+  try {
+    sessionStorage.setItem(PENDING_SCORE_KEY, JSON.stringify({ game1Score: safeScore }));
+  } catch (_) {}
+}
+
+function clearPendingScores() {
+  try {
+    sessionStorage.removeItem(PENDING_SCORE_KEY);
+  } catch (_) {}
+}
+
+async function postFinalCombinedScore(game2Score) {
+  if (typeof window === 'undefined') return;
+  if (typeof window.GPA_SCORE === 'undefined' || typeof window.GPA_SCORE.postScore !== 'function') return;
+
+  const safeGame2 = Math.max(0, Math.floor(Number(game2Score) || 0));
+  const pending = getPendingScores();
+  const safeGame1 = Math.max(0, Math.floor(Number(pending.game1Score) || 0));
+  const combinedScore = safeGame1 + safeGame2;
+
+  try {
+    await window.GPA_SCORE.postScore('game2_2', combinedScore, {
+      game1Score: safeGame1,
+      game2Score: safeGame2,
+      source: 'story-final',
+    });
+  } catch (err) {
+    console.warn('[GPA_SCORE] game2_2:', err && err.message ? err.message : err);
+  }
+}
+
+/** Hạng người chơi trên bảng tổng (ưu tiên điểm tổng final của game2_2). */
 async function fetchUserCombinedLeaderboardRank() {
   const displayName = getPlayerDisplayName();
   const key = normalizeRankName(displayName);
@@ -270,6 +316,7 @@ function wireMessages() {
         } catch (_) {}
         return;
       }
+      setPendingGame1Score(d.score);
       hideG1Frame();
       setPhase(PHASE.MODAL_G2);
       const p = api.getPlayer && api.getPlayer();
@@ -312,6 +359,7 @@ function wireMessages() {
           console.log('[STORY] gameOver accepted', { score: d.score, phase: PHASE.READY_EMBED });
         }
       } catch (_) {}
+      postFinalCombinedScore(d.score);
       setPhase(PHASE.DONE);
       const p = api.getPlayer && api.getPlayer();
       const hideDelay = 5000;
@@ -339,9 +387,11 @@ export function initStoryFlow() {
     const q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
     if (!q || q.get('continue') !== '1') {
       sessionStorage.removeItem(STORY_KEY);
+      clearPendingScores();
     }
   } catch (_) {
     sessionStorage.removeItem(STORY_KEY);
+    clearPendingScores();
   }
 
   try {
