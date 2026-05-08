@@ -290,12 +290,6 @@ function updateTimer() {
         if (window.parent && window.parent !== window) {
             window.parent.postMessage({ type: 'gameOver', score: score }, '*');
         }
-
-        if (typeof window.GPA_SCORE !== 'undefined' && typeof window.GPA_SCORE.postScore === 'function') {
-            window.GPA_SCORE.postScore('game2_1', score).catch(function (err) {
-                console.warn('[GPA_SCORE] game2_1:', err && err.message ? err.message : err);
-            });
-        }
     }
 }
 
