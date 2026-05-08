@@ -470,6 +470,8 @@
   var menuRenderer = null;
   var menuControls = null;
   var menuCharacter = null;
+  var menuMixer = null;
+  var menuClock = new THREE.Clock();
 
   function disposeMenuThree() {
     if (menuAnimationId) {
@@ -487,6 +489,7 @@
     menuScene = null;
     menuCamera = null;
     menuCharacter = null;
+    menuMixer = null;
     menuInited = false;
   }
 
@@ -537,9 +540,16 @@
     }
     var loader = new LoaderCtor();
     loader.load(
-      'assets/models/characterwaving.glb',
+      'assets/models/vaytay.glb',
       function (gltf) {
         menuCharacter = gltf.scene;
+        // Animation
+        if (gltf.animations && gltf.animations.length > 0) {
+          menuMixer = new THREE.AnimationMixer(menuCharacter);
+          var clip = gltf.animations[0];
+          var action = menuMixer.clipAction(clip);
+          action.play();
+        }
         var box = new THREE.Box3().setFromObject(menuCharacter);
         var size = new THREE.Vector3();
         box.getSize(size);
@@ -589,11 +599,20 @@
 
     function loop() {
       menuAnimationId = requestAnimationFrame(loop);
+
+      var delta = menuClock.getDelta();
+
+      if (menuMixer) {
+        menuMixer.update(delta);
+      }
+
       if (menuControls) menuControls.update();
+
       if (menuRenderer && menuScene && menuCamera) {
         menuRenderer.render(menuScene, menuCamera);
       }
     }
+//4. Đổi file model
     menuAnimationId = requestAnimationFrame(loop);
   }
 
