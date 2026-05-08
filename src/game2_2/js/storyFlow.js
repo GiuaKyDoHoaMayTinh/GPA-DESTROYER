@@ -205,7 +205,7 @@ export function onPlayerSatDeskAfterPose() {
   if (phase === PHASE.AT_DESK_HINT || phase === PHASE.INTRO_WALK) {
     setPhase(PHASE.MODAL_G1);
     showStoryModal(
-      'Để bắt đầu. Bạn hãy thực hiện đăng ký tín chỉ. 2 quả bóng tương đương với 1 tín chỉ. Thu thập đủ số tín chỉ bạn sẽ qua màn.',
+      'Để bắt đầu. Bạn hãy thực hiện đăng ký tín chỉ bằng cách thu thập bóng. Thu thập 2 quả bóng tương đương với 1 tín chỉ. Thu thập đủ số tín chỉ bạn sẽ qua màn. Hãy thu thập thêm điểm cộng và né vật cản làm mất kết nối mạng để có số điểm tích lũy cao hơn nhé!',
       () => {
         setPhase(PHASE.PLAYING_G1);
         showG1Frame();
@@ -243,7 +243,7 @@ function wireMessages() {
         api.standUp(p, api.deskZone, api.bedZone);
       }
       showStoryModal(
-        'Để tích lũy điểm số, bạn tìm cách chạy deadline mà không bị Jerry làm phiền. Hãy click vào Jerry để đuổi nó đi!',
+        'Để tích lũy điểm số. Bạn hãy thực hiện chạy deadline bằng cách hoàn thành phần gõ chữ tiếng Anh xuất hiện trên màn hình. Hãy cẩn thận chuột nhé, nó sẽ làm tắt màn hình của bạn nếu không kịp thời đuổi đi Click vào chuột để đuổi nó đi!',
         () => {
           setPhase(PHASE.READY_EMBED);
         }
