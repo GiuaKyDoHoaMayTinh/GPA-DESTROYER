@@ -1,12 +1,31 @@
 // input.js - Xử lý input từ bàn phím và chuột
 
-import { updatePlayerInput, standUp, tryInteract, setPlayerTarget } from './player.js';
+import { updatePlayerInput, standUp, tryInteract, setPlayerTarget, getPlayerDirection } from './player.js';
 import { getCamera } from './camera.js';
 import { getScene, toggleLamp } from './scene.js';
 import { updateCSS3DRendererSize, isEmbeddedGameActive, sendEmbeddedStartGame, exitEmbeddedGame } from './embeddedGame.js';
 import { pauseBgMusic } from './ui.js';
 import * as THREE from 'three';
 import { handleMouseClick, isMouseVisible } from './mouse.js';
+
+// Function to show cursor click indicator
+function showClickIndicator(clientX, clientY) {
+  const indicator = document.getElementById('cursor-click-indicator');
+  if (!indicator) return;
+  
+  const direction = getPlayerDirection();
+  const rotationDegrees = (direction * 180) / Math.PI + 180; // Thêm 180 độ để xoay đúng hướng
+  
+  indicator.style.left = clientX + 'px';
+  indicator.style.top = clientY + 'px';
+  indicator.style.transform = `translate(-50%, -50%) rotate(${rotationDegrees}deg)`;
+  indicator.style.opacity = '1';
+  indicator.style.transition = 'opacity 0.6s ease-out';
+  
+  setTimeout(() => {
+    indicator.style.opacity = '0';
+  }, 100);
+}
 
 export function initInput(player, deskZone, bedZone, lampZone, zoneRadius) {
   // Keyboard events (keep for E and Space)
@@ -86,6 +105,9 @@ export function initInput(player, deskZone, bedZone, lampZone, zoneRadius) {
     const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); // Y=0 plane
     const target = new THREE.Vector3();
     raycaster.ray.intersectPlane(plane, target);
+
+    // Show cursor click indicator
+    showClickIndicator(event.clientX, event.clientY);
 
     // Set player target to clicked position
     setPlayerTarget(target.x, 0, target.z);

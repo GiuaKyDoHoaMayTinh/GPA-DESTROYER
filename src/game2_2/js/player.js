@@ -15,6 +15,7 @@ const walkAnimationSpeed = 6; // Tốc độ bobbing
 const PLAYER_DEBUG = true;
 
 let playerTarget = new THREE.Vector3(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y, CONFIG.playerStartPos.z); // Vị trí mục tiêu cho nhân vật
+let playerDirection = 0; // Hướng xoay của nhân vật (radians)
 
 const keys = {
   w: false,
@@ -85,6 +86,7 @@ export function updatePlayerMovement(player, dt) {
   // Cập nhật hướng nhân vật
   const angle = Math.atan2(direction.x, direction.z);
   player.rotation.y = angle;
+  playerDirection = angle;
 
   // Tính vị trí mới
   const move = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), angle);
@@ -223,4 +225,8 @@ export function tryInteract(player, deskZone, bedZone) {
   } else {
     lieOnBed(player, bedZone);
   }
+}
+
+export function getPlayerDirection() {
+  return playerDirection;
 }
