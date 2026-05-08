@@ -45,9 +45,20 @@ function attachEmbeddedKeyboardBridge(iframe) {
   if (iframeDocument.__spaceExitBridgeAttached) return;
 
   iframeDocument.addEventListener('keydown', (event) => {
+    if (event.code === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof embeddedExitHandler === 'function') {
+        embeddedExitHandler();
+      } else {
+        forceStandUpFromEmbeddedSpace();
+      }
+      return;
+    }
+
     if (event.code !== 'Space') return;
-    
-  // ✅ Game2D đang chạy → KHÓA Space thoát
+
+    // ✅ Game2D đang chạy → KHÓA Space thoát
     if (isGame2DRunning) {
       return; // Space hoàn toàn thuộc về game2D
     }
@@ -154,6 +165,11 @@ export function toggleEmbeddedGame(visible) {
     css3dRenderer.domElement.style.pointerEvents = visible ? 'auto' : 'none';
   }
 
+  // Khi bật game, reload iframe để bắt đầu từ đầu
+  if (visible && embeddedIframeEl) {
+    embeddedIframeEl.src = '../game2_1/index.html';
+  }
+
   // XỬ LÝ FOCUS KHI BẬT GAME
   if (visible && embeddedGameObject.element) {
     // Dùng setTimeout để đợi iframe thực sự render lên màn hình rồi mới focus
@@ -175,6 +191,18 @@ export function toggleEmbeddedGame(visible) {
 
 export function isEmbeddedGameActive() {
   return isGameActive;
+}
+
+export function exitEmbeddedGame() {
+  if (!embeddedGameObject) {
+    console.warn('⚠️ Không có embedded game để thoát');
+    return;
+  }
+  if (typeof embeddedExitHandler === 'function') {
+    embeddedExitHandler();
+  } else {
+    forceStandUpFromEmbeddedSpace();
+  }
 }
 
 /** Cửa sổ iframe game2_1 — dùng lọc postMessage trong storyFlow */

@@ -3,7 +3,7 @@
 import { updatePlayerInput, standUp, tryInteract, setPlayerTarget } from './player.js';
 import { getCamera } from './camera.js';
 import { getScene, toggleLamp } from './scene.js';
-import { updateCSS3DRendererSize, isEmbeddedGameActive, sendEmbeddedStartGame } from './embeddedGame.js';
+import { updateCSS3DRendererSize, isEmbeddedGameActive, sendEmbeddedStartGame, exitEmbeddedGame } from './embeddedGame.js';
 import { pauseBgMusic } from './ui.js';
 import * as THREE from 'three';
 import { handleMouseClick, isMouseVisible } from './mouse.js';
@@ -22,6 +22,11 @@ export function initInput(player, deskZone, bedZone, lampZone, zoneRadius) {
     }
 
     if (isEmbeddedGameActive()) {
+      if (event.code === 'Escape') {
+        event.preventDefault();
+        exitEmbeddedGame();
+        return;
+      }
       if (event.code === 'Enter' || event.code === 'NumpadEnter') {
         event.preventDefault();
         sendEmbeddedStartGame();

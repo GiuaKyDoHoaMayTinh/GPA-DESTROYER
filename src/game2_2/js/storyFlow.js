@@ -4,7 +4,7 @@
  * Debug: localStorage GPA_DEBUG_STORY=1 → log gameOver / phase.
  */
 import { isEmbeddedGameActive, getEmbeddedGameWindow } from './embeddedGame.js';
-import { playBgMusic, pauseBgMusic } from './ui.js';
+import { playBgMusic, pauseBgMusic, showMessage } from './ui.js';
 const STORY_KEY = 'gpa_g2_story_phase';
 const SESSION_PLAYER = 'gpa_current_player';
 
@@ -68,12 +68,46 @@ function hideG1Frame() {
   playBgMusic();
 }
 
+function exitGame1ToRoom() {
+  hideG1Frame();
+  const p = api.getPlayer && api.getPlayer();
+  if (p && api.standUp && api.deskZone && api.bedZone) {
+    api.standUp(p, api.deskZone, api.bedZone);
+  }
+  showMessage('Bạn đã thoát game và quay trở lại phòng.');
+}
+
+function exitEmbeddedGameToRoom() {
+  if (api.toggleEmbeddedGame) api.toggleEmbeddedGame(false);
+  const p = api.getPlayer && api.getPlayer();
+  if (p && api.standUp && api.deskZone && api.bedZone) {
+    api.standUp(p, api.deskZone, api.bedZone);
+  }
+  showMessage('Bạn đã thoát game và quay trở lại phòng.');
+}
+
+function attachG1KeyboardBridge(iframe) {
+  if (!iframe || !iframe.contentWindow || !iframe.contentWindow.document) return;
+  const iframeDocument = iframe.contentWindow.document;
+  if (iframeDocument.__g1ExitBridgeAttached) return;
+
+  iframeDocument.addEventListener('keydown', (event) => {
+    if (event.code !== 'Escape') return;
+    event.preventDefault();
+    event.stopPropagation();
+    window.parent.postMessage({ type: 'exitGame1' }, '*');
+  }, true);
+
+  iframeDocument.__g1ExitBridgeAttached = true;
+}
+
 function showG1Frame() {
   const w = el('g1-frame-wrap');
   const f = el('g1-frame');
   if (!w || !f) return;
   pauseBgMusic();
   f.src = '../game1_1/credit%20catching%20game/index.html?hub=1&embed=1&v=' + Date.now();
+  f.addEventListener('load', () => attachG1KeyboardBridge(f), { once: true });
   w.hidden = false;
 }
 
@@ -251,6 +285,22 @@ function wireMessages() {
       return;
     }
 
+    if (d.type === 'exitGame1') {
+      if (getPhase() === PHASE.PLAYING_G1 || getPhase() === PHASE.MODAL_G1) {
+        setPhase(PHASE.AT_DESK_HINT);
+      }
+      exitGame1ToRoom();
+      return;
+    }
+
+    if (d.type === 'exitEmbeddedGame') {
+      if (getPhase() === PHASE.READY_EMBED || getPhase() === PHASE.DONE) {
+        setPhase(PHASE.READY_EMBED);
+      }
+      exitEmbeddedGameToRoom();
+      return;
+    }
+
     if (d.type === 'gameOver') {
       if (getPhase() !== PHASE.READY_EMBED) return;
       if (typeof d.score !== 'number' || !Number.isFinite(d.score)) return;
@@ -304,4 +354,16 @@ export function initStoryFlow() {
   } catch (_) {}
 
   wireMessages();
+
+  window.addEventListener('keydown', (event) => {
+    if (event.code !== 'Escape') return;
+    const g1wrap = el('g1-frame-wrap');
+    if (g1wrap && !g1wrap.hidden) {
+      event.preventDefault();
+      if (getPhase() === PHASE.PLAYING_G1 || getPhase() === PHASE.MODAL_G1) {
+        setPhase(PHASE.AT_DESK_HINT);
+      }
+      exitGame1ToRoom();
+    }
+  });
 }
