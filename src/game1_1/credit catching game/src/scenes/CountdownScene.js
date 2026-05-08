@@ -85,6 +85,25 @@ export class CountdownScene extends Phaser.Scene {
             }
         });
 
+        // 1. Vẽ hình chữ nhật đen bo tròn (Thay cho instructionBg cũ)
+        const instructionBg = this.add.graphics();
+        instructionBg.fillStyle(0x000000, 0.8); // Màu đen, alpha 0.8
+        instructionBg.fillRoundedRect(this.scale.width - 1420, 30, 490, 90, 40); // x, y, width, height, độ bo góc
+        instructionBg.lineStyle(2, 0xffffff, 0.3); // Viền trắng mờ
+        instructionBg.strokeRoundedRect(this.scale.width - 1420, 30, 490, 90, 40);
+
+        // 2. Chỉnh lại Text để nằm giữa cái khung mới
+        const instructionText = this.add.text(
+            this.scale.width - 1170, 75, // Căn giữa theo chiều ngang và dọc của khung
+            'Di chuyển ⬅ ➡ để điều khiển',
+            {
+                fontFamily: 'Arial',
+                fontSize: '30px', 
+                fontStyle: 'bold',
+                color: '#ffffff'
+            }
+        ).setOrigin(0.5);
+
         this.cameras.main.fadeIn(300);
     }
 }
