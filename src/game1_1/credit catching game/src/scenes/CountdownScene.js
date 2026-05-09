@@ -47,6 +47,39 @@ export class CountdownScene extends Phaser.Scene {
             strokeThickness: 6
         });
 
+        // Khung đen bo tròn ở giữa màn hình
+        const boxWidth = 800;
+        const boxHeight = 160;
+        const boxX = this.scale.width / 2 - boxWidth / 2;
+        const boxY = this.scale.height / 2 - boxHeight / 2;
+
+        const instructionBg = this.add.graphics(); // Dùng Graphics để vẽ khung đen bo tròn
+        instructionBg.fillStyle(0x000000, 0.8); // Màu đen với độ mờ 80%
+        instructionBg.fillRoundedRect(boxX, boxY, boxWidth, boxHeight, 30); // Vẽ hình chữ nhật bo tròn
+        instructionBg.lineStyle(2, 0xffffff, 0.3); // Viền trắng mờ
+        instructionBg.strokeRoundedRect(boxX, boxY, boxWidth, boxHeight, 30); // Vẽ viền cho khung
+
+        // 2 dòng chữ căn giữa khung
+        const instructionText = this.add.text(
+            this.scale.width / 2,
+            this.scale.height / 2,
+            'Sử dụng ⬅ ➡ để di chuyển thanh hứng',
+            {
+                fontFamily: 'Arial',
+                fontSize: '40px',
+                fontStyle: 'bold',
+                color: '#ffffff',
+                align: 'center',
+                lineSpacing: 12
+            }
+        ).setOrigin(0.5);
+
+        // Ẩn cả khung lẫn chữ sau 5 giây
+        this.time.delayedCall(5000, () => {
+            instructionBg.destroy();
+            instructionText.destroy();
+        });
+
         // Số đếm ngược ở giữa màn hình
         const countText = this.add.text(this.scale.width / 2, this.scale.height / 2, '5', {
             fontFamily: 'Arial',
@@ -55,35 +88,62 @@ export class CountdownScene extends Phaser.Scene {
             color: '#ffffff',
             stroke: '#000000',
             strokeThickness: 10
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setVisible(false); // Ban đầu ẩn số đếm ngược;
 
-        // Đếm ngược từ 5 xuống 1 rồi start GameScene
-        let count = 5;
-        this.time.addEvent({
-            delay: 1000,
-            repeat: 4,
-            callback: () => {
-                count--;
-                if (count > 0) {
-                    countText.setText(count.toString());
-                    // Hiệu ứng phóng to rồi thu nhỏ
-                    this.tweens.add({
-                        targets: countText,
-                        scaleX: 1.3,
-                        scaleY: 1.3,
-                        duration: 100,
-                        yoyo: true,
-                    });
-                } else {
-                    // Đếm xong, chuyển sang GameScene
-                    countText.destroy();
-                    this.cameras.main.fadeOut(300);
-                    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-                        this.scene.start('GameScene');
-                    });
+        // Đợi 5 giây (hướng dẫn hiện xong) rồi mới bắt đầu đếm ngược
+        this.time.delayedCall(5000, () => {
+            countText.setVisible(true); // Hiện số đếm ngược
+
+            let count = 5;
+            this.time.addEvent({
+                delay: 1000,
+                repeat: 4,
+                callback: () => {
+                    count--;
+                    if (count > 0) {
+                        countText.setText(count.toString());
+                        this.tweens.add({
+                            targets: countText,
+                            scaleX: 1.3,
+                            scaleY: 1.3,
+                            duration: 100,
+                            yoyo: true,
+                        });
+                    } else {
+                        countText.destroy();
+                        this.cameras.main.fadeOut(300);
+                        this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+                            this.scene.start('GameScene');
+                        });
+                    }
                 }
-            }
+            });
         });
+
+        // Khung ESC góc trên bên phải — hiện xuyên suốt, không bị xóa
+        const escBoxWidth = 280;
+        const escBoxHeight = 60;
+        const escBoxX = this.scale.width - escBoxWidth - 20;
+        const escBoxY = 20;
+
+        const escBg = this.add.graphics();
+        escBg.fillStyle(0x000000, 0.5);
+        escBg.fillRoundedRect(escBoxX, escBoxY, escBoxWidth, escBoxHeight, 20);
+        escBg.lineStyle(2, 0xffffff, 0.3);
+        escBg.strokeRoundedRect(escBoxX, escBoxY, escBoxWidth, escBoxHeight, 20);
+
+        this.add.text(
+            escBoxX + escBoxWidth / 2,
+            escBoxY + escBoxHeight / 2,
+            'Nhấn ESC để thoát game',
+            {
+                fontFamily: 'Arial',
+                fontSize: '20px',
+                fontStyle: 'bold',
+                color: '#ffffff',
+                align: 'center'
+            }
+        ).setOrigin(0.5);
 
         this.cameras.main.fadeIn(300);
     }

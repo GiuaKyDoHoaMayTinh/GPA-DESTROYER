@@ -127,6 +127,31 @@ export class GameScene extends Phaser.Scene {
         this.gameIsOver = false;
         this.timedEvent = this.time.delayedCall(40 * 1000, this.handGameOver, [], this);
 
+        // Khung ESC góc trên bên phải — hiện xuyên suốt lúc chơi
+        const escBoxWidth = 280;
+        const escBoxHeight = 60;
+        const escBoxX = this.scale.width - escBoxWidth - 20;
+        const escBoxY = 20;
+
+        const escBg = this.add.graphics();
+        escBg.fillStyle(0x000000, 0.5);
+        escBg.fillRoundedRect(escBoxX, escBoxY, escBoxWidth, escBoxHeight, 20);
+        escBg.lineStyle(2, 0xffffff, 0.3); // Viền trắng mờ
+        escBg.strokeRoundedRect(escBoxX, escBoxY, escBoxWidth, escBoxHeight, 20);
+
+        this.add.text(
+            escBoxX + escBoxWidth / 2,
+            escBoxY + escBoxHeight / 2,
+            'Nhấn ESC để thoát game',
+            {
+                fontFamily: 'Arial',
+                fontSize: '20px',
+                fontStyle: 'bold',
+                color: '#ffffff',
+                align: 'center'
+            }
+        ).setOrigin(0.5);
+
         this.cameras.main.fadeIn(500);
     }
 
@@ -331,6 +356,7 @@ export class GameScene extends Phaser.Scene {
             }
 
             const allCreditsFilled = this.subjectBallCount.every((count, index) => count >= this.creditBoxes[index].length * 2);
+            // const allCreditsFilled = true;
             if (allCreditsFilled) {
                 this.finishGame(true);
             }

@@ -7,12 +7,14 @@ import { CONFIG } from './utils.js';
 import { toggleEmbeddedGame } from './embeddedGame.js';
 import { getMouseModel } from './scene.js';
 import { shouldOpenEmbeddedWhenSitting, onPlayerSatDeskAfterPose } from './storyFlow.js';
+import * as mouseModule from './mouse.js';
 
 let actionState = 'walk';
 let isMoving = false;
 const PLAYER_DEBUG = true;
 
 let playerTarget = new THREE.Vector3(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y, CONFIG.playerStartPos.z); // Vị trí mục tiêu cho nhân vật
+let playerDirection = 0; // Hướng xoay của nhân vật (radians)
 
 let walkAction = null;
 
@@ -149,6 +151,7 @@ export function updatePlayerMovement(player, dt) {
   // Cập nhật hướng nhân vật
   const angle = Math.atan2(direction.x, direction.z);
   player.rotation.y = angle;
+  playerDirection = angle;
 
   // Tính vị trí mới
   const move = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), angle);
@@ -271,6 +274,13 @@ export function standUp(player, deskZone, bedZone) {
   
   // Tắt embedded game khi đứng dậy
   toggleEmbeddedGame(false);
+  
+  // Dừng chuột khi đứng dậy
+  const mouseModel = getMouseModel();
+  if (mouseModel) {
+    mouseModule.stopMouseLifecycle(mouseModel);
+  }
+  
   window.dispatchEvent(new CustomEvent('force-camera-default'));
   
   actionState = 'walk';
@@ -311,4 +321,8 @@ export function tryInteract(player, deskZone, bedZone) {
   } else {
     lieOnBed(player, bedZone);
   }
+}
+
+export function getPlayerDirection() {
+  return playerDirection;
 }

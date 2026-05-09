@@ -4,9 +4,10 @@
  * Debug: localStorage GPA_DEBUG_STORY=1 → log gameOver / phase.
  */
 import { isEmbeddedGameActive, getEmbeddedGameWindow } from './embeddedGame.js';
-import { playBgMusic, pauseBgMusic } from './ui.js';
+import { playBgMusic, pauseBgMusic, showMessage } from './ui.js';
 const STORY_KEY = 'gpa_g2_story_phase';
 const SESSION_PLAYER = 'gpa_current_player';
+const PENDING_SCORE_KEY = 'gpa_g2_pending_scores';
 
 const PHASE = {
   INTRO_WALK: 'intro_walk',
@@ -68,12 +69,46 @@ function hideG1Frame() {
   playBgMusic();
 }
 
+function exitGame1ToRoom() {
+  hideG1Frame();
+  const p = api.getPlayer && api.getPlayer();
+  if (p && api.standUp && api.deskZone && api.bedZone) {
+    api.standUp(p, api.deskZone, api.bedZone);
+  }
+  showMessage('Bạn đã thoát game và quay trở lại phòng.');
+}
+
+function exitEmbeddedGameToRoom() {
+  if (api.toggleEmbeddedGame) api.toggleEmbeddedGame(false);
+  const p = api.getPlayer && api.getPlayer();
+  if (p && api.standUp && api.deskZone && api.bedZone) {
+    api.standUp(p, api.deskZone, api.bedZone);
+  }
+  showMessage('Bạn đã thoát game và quay trở lại phòng.');
+}
+
+function attachG1KeyboardBridge(iframe) {
+  if (!iframe || !iframe.contentWindow || !iframe.contentWindow.document) return;
+  const iframeDocument = iframe.contentWindow.document;
+  if (iframeDocument.__g1ExitBridgeAttached) return;
+
+  iframeDocument.addEventListener('keydown', (event) => {
+    if (event.code !== 'Escape') return;
+    event.preventDefault();
+    event.stopPropagation();
+    window.parent.postMessage({ type: 'exitGame1' }, '*');
+  }, true);
+
+  iframeDocument.__g1ExitBridgeAttached = true;
+}
+
 function showG1Frame() {
   const w = el('g1-frame-wrap');
   const f = el('g1-frame');
   if (!w || !f) return;
   pauseBgMusic();
   f.src = '../game1_1/credit%20catching%20game/index.html?hub=1&embed=1&v=' + Date.now();
+  f.addEventListener('load', () => attachG1KeyboardBridge(f), { once: true });
   w.hidden = false;
 }
 
@@ -117,7 +152,52 @@ function getPlayerDisplayName() {
   }
 }
 
-/** Hạng người chơi trên bảng tổng (điểm cao nhất ĐKTC + điểm cao nhất Jerry). */
+function getPendingScores() {
+  try {
+    const raw = sessionStorage.getItem(PENDING_SCORE_KEY);
+    if (!raw) return { game1Score: 0 };
+    const parsed = JSON.parse(raw);
+    const game1Score = Number(parsed && parsed.game1Score);
+    return { game1Score: Number.isFinite(game1Score) && game1Score > 0 ? Math.floor(game1Score) : 0 };
+  } catch (_) {
+    return { game1Score: 0 };
+  }
+}
+
+function setPendingGame1Score(score) {
+  const safeScore = Math.max(0, Math.floor(Number(score) || 0));
+  try {
+    sessionStorage.setItem(PENDING_SCORE_KEY, JSON.stringify({ game1Score: safeScore }));
+  } catch (_) {}
+}
+
+function clearPendingScores() {
+  try {
+    sessionStorage.removeItem(PENDING_SCORE_KEY);
+  } catch (_) {}
+}
+
+async function postFinalCombinedScore(game2Score) {
+  if (typeof window === 'undefined') return;
+  if (typeof window.GPA_SCORE === 'undefined' || typeof window.GPA_SCORE.postScore !== 'function') return;
+
+  const safeGame2 = Math.max(0, Math.floor(Number(game2Score) || 0));
+  const pending = getPendingScores();
+  const safeGame1 = Math.max(0, Math.floor(Number(pending.game1Score) || 0));
+  const combinedScore = safeGame1 + safeGame2;
+
+  try {
+    await window.GPA_SCORE.postScore('game2_2', combinedScore, {
+      game1Score: safeGame1,
+      game2Score: safeGame2,
+      source: 'story-final',
+    });
+  } catch (err) {
+    console.warn('[GPA_SCORE] game2_2:', err && err.message ? err.message : err);
+  }
+}
+
+/** Hạng người chơi trên bảng tổng (ưu tiên điểm tổng final của game2_2). */
 async function fetchUserCombinedLeaderboardRank() {
   const displayName = getPlayerDisplayName();
   const key = normalizeRankName(displayName);
@@ -205,7 +285,7 @@ export function onPlayerSatDeskAfterPose() {
   if (phase === PHASE.AT_DESK_HINT || phase === PHASE.INTRO_WALK) {
     setPhase(PHASE.MODAL_G1);
     showStoryModal(
-      'Để bắt đầu. Bạn hãy thực hiện đăng ký tín chỉ. 2 quả bóng tương đương với 1 tín chỉ. Thu thập đủ số tín chỉ bạn sẽ qua màn.',
+      'Để bắt đầu. Bạn hãy thực hiện đăng ký tín chỉ bằng cách thu thập bóng. Thu thập 2 quả bóng tương đương với 1 tín chỉ. Thu thập đủ số tín chỉ bạn sẽ qua màn. Hãy thu thập thêm điểm cộng và né vật cản làm mất kết nối mạng để có số điểm tích lũy cao hơn nhé!',
       () => {
         setPhase(PHASE.PLAYING_G1);
         showG1Frame();
@@ -236,6 +316,7 @@ function wireMessages() {
         } catch (_) {}
         return;
       }
+      setPendingGame1Score(d.score);
       hideG1Frame();
       setPhase(PHASE.MODAL_G2);
       const p = api.getPlayer && api.getPlayer();
@@ -243,11 +324,27 @@ function wireMessages() {
         api.standUp(p, api.deskZone, api.bedZone);
       }
       showStoryModal(
-        'Để tích lũy điểm số, bạn tìm cách chạy deadline mà không bị Jerry làm phiền. Hãy click vào Jerry để đuổi nó đi!',
+        'Để tích lũy điểm số. Bạn hãy thực hiện chạy deadline bằng cách hoàn thành phần gõ chữ tiếng Anh xuất hiện trên màn hình. Hãy cẩn thận chuột nhé, nó sẽ làm tắt màn hình của bạn nếu không kịp thời đuổi đi Click vào chuột để đuổi nó đi!',
         () => {
           setPhase(PHASE.READY_EMBED);
         }
       );
+      return;
+    }
+
+    if (d.type === 'exitGame1') {
+      if (getPhase() === PHASE.PLAYING_G1 || getPhase() === PHASE.MODAL_G1) {
+        setPhase(PHASE.AT_DESK_HINT);
+      }
+      exitGame1ToRoom();
+      return;
+    }
+
+    if (d.type === 'exitEmbeddedGame') {
+      if (getPhase() === PHASE.READY_EMBED || getPhase() === PHASE.DONE) {
+        setPhase(PHASE.READY_EMBED);
+      }
+      exitEmbeddedGameToRoom();
       return;
     }
 
@@ -262,6 +359,7 @@ function wireMessages() {
           console.log('[STORY] gameOver accepted', { score: d.score, phase: PHASE.READY_EMBED });
         }
       } catch (_) {}
+      postFinalCombinedScore(d.score);
       setPhase(PHASE.DONE);
       const p = api.getPlayer && api.getPlayer();
       const hideDelay = 5000;
@@ -289,9 +387,11 @@ export function initStoryFlow() {
     const q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
     if (!q || q.get('continue') !== '1') {
       sessionStorage.removeItem(STORY_KEY);
+      clearPendingScores();
     }
   } catch (_) {
     sessionStorage.removeItem(STORY_KEY);
+    clearPendingScores();
   }
 
   try {
@@ -304,4 +404,16 @@ export function initStoryFlow() {
   } catch (_) {}
 
   wireMessages();
+
+  window.addEventListener('keydown', (event) => {
+    if (event.code !== 'Escape') return;
+    const g1wrap = el('g1-frame-wrap');
+    if (g1wrap && !g1wrap.hidden) {
+      event.preventDefault();
+      if (getPhase() === PHASE.PLAYING_G1 || getPhase() === PHASE.MODAL_G1) {
+        setPhase(PHASE.AT_DESK_HINT);
+      }
+      exitGame1ToRoom();
+    }
+  });
 }
