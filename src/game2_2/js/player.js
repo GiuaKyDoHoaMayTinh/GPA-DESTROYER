@@ -43,17 +43,25 @@ function playerDebug(tag, extra = {}) {
 }
 
 export function playWalkAnimation() {
-  if (walkAction && !walkAction.isRunning()) {
+  if (!walkAction) return;
+
+  // Resume nếu đang pause để tránh reset pose về frame 0.
+  if (walkAction.paused) {
+    walkAction.paused = false;
+  }
+
+  if (!walkAction.isRunning()) {
     walkAction.play();
   }
 }
 
 export function stopWalkAnimation() {
-  if (walkAction) {
-    walkAction.time = 0;
-    if (walkAction.isRunning()) {
-      walkAction.stop(); 
-    }
+  if (!walkAction) return;
+
+  // Đưa animation về frame đầu (time=0) và pause, không dùng stop().
+  walkAction.time = 0;
+  if (walkAction.isRunning()) {
+    walkAction.paused = true;
   }
 }
 
@@ -81,11 +89,17 @@ export function initPlayerAnimations(mixer, animations) {
   });
 
   if (walkClip) {
-    walkAction = mixer.clipAction(walkClip);
+    // Loại bỏ track position để tránh root-motion tự đẩy model rồi giật lùi.
+    const walkClipNoRootMotion = walkClip.clone();
+    walkClipNoRootMotion.tracks = walkClipNoRootMotion.tracks.filter(
+      (track) => !track.name.endsWith('.position')
+    );
+
+    walkAction = mixer.clipAction(walkClipNoRootMotion);
     walkAction.loop = THREE.LoopRepeat;
     walkAction.clampWhenFinished = true;
     walkAction.enabled = true;
-    console.log('✅ Walk animation loaded:', walkClip.name);
+    console.log('✅ Walk animation loaded:', walkClip.name, '(position tracks removed)');
   } else {
     walkAction = null;
     console.warn('⚠️ Walk animation không tìm thấy trong player model');

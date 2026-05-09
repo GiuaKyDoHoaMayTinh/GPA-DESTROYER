@@ -152,17 +152,17 @@
 
       updateDoorIntro(dt);
 
-      // Cập nhật nhân vật
-      if (player) {
-        story.storyTick(player);
-        updatePlayerMovement(player, dt);
-        updateCameraFollow(player, camera);
-      }
-
       // Cập nhật animation mixer
       const playerMixer = getPlayerMixer();
       if (playerMixer) {
         playerMixer.update(dt);
+      }
+
+      // Cập nhật nhân vật sau animation để movement không bị animation ghi đè transform
+      if (player) {
+        story.storyTick(player);
+        updatePlayerMovement(player, dt);
+        updateCameraFollow(player, camera);
       }
 
       // Cập nhật chuột
