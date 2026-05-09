@@ -1,7 +1,7 @@
 // player.js - Quản lý điều khiển, animation và collision nhân vật
 
 import * as THREE from 'three';
-import { showMessage, updateHint, hideActionHint } from './ui.js';
+import { showMessage, hideActionHint } from './ui.js';
 import { checkCollision, isNearDeskZone, isNearBedZone } from './collision.js';
 import { CONFIG } from './utils.js';
 import { toggleEmbeddedGame } from './embeddedGame.js';
@@ -11,10 +11,18 @@ import { shouldOpenEmbeddedWhenSitting, onPlayerSatDeskAfterPose } from './story
 let actionState = 'walk';
 let isMoving = false;
 let walkAnimationTime = 0;
-const walkAnimationSpeed = 6; // Tốc độ bobbing
+const walkAnimationSpeed = -2; // Tốc độ bobbing
 const PLAYER_DEBUG = true;
 
 let playerTarget = new THREE.Vector3(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y, CONFIG.playerStartPos.z); // Vị trí mục tiêu cho nhân vật
+
+let walkAction = null;
+
+// Phát hiện kẹt (stuck detection)
+let lastPosition = new THREE.Vector3(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y, CONFIG.playerStartPos.z);
+let stuckTimer = 0;
+const STUCK_THRESHOLD = 0.02; // Khoảng cách tối thiểu để coi là đang di chuyển
+const STUCK_TIME_LIMIT = 0.2; // Thời gian (giây) trước khi dừng nếu bị kẹt
 
 const keys = {
   w: false,
@@ -36,12 +44,55 @@ function playerDebug(tag, extra = {}) {
   });
 }
 
+export function playWalkAnimation() {
+  if (walkAction && !walkAction.isRunning()) {
+    walkAction.play();
+  }
+}
+
+export function stopWalkAnimation() {
+  if (walkAction) {
+    walkAction.time = 0;
+    if (walkAction.isRunning()) {
+      walkAction.stop(); 
+    }
+  }
+}
+
 export function initPlayer() {
   actionState = 'walk';
   isMoving = false;
   walkAnimationTime = 0;
   playerTarget.set(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y, CONFIG.playerStartPos.z);
-  Object.keys(keys).forEach(key => keys[key] = false);
+  lastPosition.set(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y, CONFIG.playerStartPos.z);
+  stuckTimer = 0;
+  Object.keys(keys).forEach((key) => {
+    keys[key] = false;
+  });
+  stopWalkAnimation();
+}
+
+export function initPlayerAnimations(mixer, animations) {
+  if (!mixer || !Array.isArray(animations) || animations.length === 0) {
+    walkAction = null;
+    return;
+  }
+
+  const walkClip = animations.find((clip) => {
+    const name = clip.name ? clip.name.toLowerCase() : '';
+    return name === 'walk' || name.includes('walk');
+  });
+
+  if (walkClip) {
+    walkAction = mixer.clipAction(walkClip);
+    walkAction.loop = THREE.LoopRepeat;
+    walkAction.clampWhenFinished = true;
+    walkAction.enabled = true;
+    console.log('✅ Walk animation loaded:', walkClip.name);
+  } else {
+    walkAction = null;
+    console.warn('⚠️ Walk animation không tìm thấy trong player model');
+  }
 }
 
 export function getActionState() {
@@ -50,10 +101,6 @@ export function getActionState() {
 
 export function setPlayerTarget(x, y, z) {
   playerTarget.set(x, y, z);
-}
-
-export function getPlayerTarget() {
-  return playerTarget;
 }
 
 export function updatePlayerInput(key, isPressed) {
@@ -65,19 +112,28 @@ export function updatePlayerInput(key, isPressed) {
 export function updatePlayerMovement(player, dt) {
   if (!player || actionState !== 'walk') {
     isMoving = false;
+    stopWalkAnimation();
     return;
   }
 
   const direction = new THREE.Vector3().subVectors(playerTarget, player.position);
   const distance = direction.length();
 
-  if (distance < 0.1) {
-    // Đã tới target, dừng
+  // Tính khoảng cách sẽ di chuyển trong frame này
+  const moveDistance = 2.8 * dt;
+  
+  if (distance <= moveDistance) {
+    // Sẽ vượt qua target hoặc đang rất gần, snap to target
+    player.position.copy(playerTarget);
     isMoving = false;
+    stopWalkAnimation();
+    stuckTimer = 0;
+    lastPosition.copy(player.position);
     return;
   }
 
   isMoving = true;
+  playWalkAnimation();
 
   // Normalize direction
   direction.normalize();
@@ -97,6 +153,26 @@ export function updatePlayerMovement(player, dt) {
   const safePosition = checkCollision(newPosition, player.position);
   player.position.copy(safePosition);
 
+  // Phát hiện kẹt: nếu nhân vật không di chuyển được
+  const distanceMoved = player.position.distanceTo(lastPosition);
+  if (distanceMoved < STUCK_THRESHOLD) {
+    stuckTimer += dt;
+    if (stuckTimer >= STUCK_TIME_LIMIT) {
+      // Bị kẹt quá lâu, dừng di chuyển
+      playerDebug('stuck:detected', { distanceMoved, stuckTimer });
+      isMoving = false;
+      stopWalkAnimation();
+      stuckTimer = 0;
+      playerTarget.copy(player.position); // Clear target để không cố đi tiếp
+      return;
+    }
+  } else {
+    // Đang di chuyển, reset timer
+    stuckTimer = 0;
+  }
+
+  lastPosition.copy(player.position);
+
   // Cập nhật animation đi bộ (bỏ bobbing)
   walkAnimationTime += dt * walkAnimationSpeed;
 }
@@ -111,9 +187,12 @@ export function setPlayerPose(player, position, rotationY, stateText, rotationX 
   });
   player.position.copy(position);
   player.rotation.set(rotationX, rotationY, rotationZ);
+  lastPosition.copy(position);
   actionState = stateText;
   isMoving = false;
   walkAnimationTime = 0;
+  stuckTimer = 0;
+  stopWalkAnimation();
 
   // Toggle embedded game khi ngồi bàn (theo kịch bản — lần đầu chỉ hướng dẫn + game1)
   if (stateText === 'sit') {
@@ -181,6 +260,8 @@ export function standUp(player, deskZone, bedZone) {
   player.position.y = 0;
   player.rotation.set(0, rotationY, 0);
   playerTarget.copy(newPos);
+  lastPosition.copy(newPos);
+  stuckTimer = 0;
   
   // Tắt embedded game khi đứng dậy
   toggleEmbeddedGame(false);
@@ -196,6 +277,7 @@ export function standUp(player, deskZone, bedZone) {
     z: newPos.z,
   });
   showMessage('Bạn đã đứng dậy. Tiếp tục đi khám phá.');
+  stopWalkAnimation();
 
   import('./mouse.js').then((mouse) => {
     const mouseModel = getMouseModel();

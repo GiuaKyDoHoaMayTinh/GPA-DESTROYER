@@ -5,12 +5,14 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { showMessage, setModelLoadProgress, clearModelLoadProgress, setDoorIntroHint } from './ui.js';
 import { CONFIG } from './utils.js';
 import { initEmbeddedGame } from './embeddedGame.js';
+import { initPlayerAnimations } from './player.js';
 
 let scene, renderer, loader;
 let player = null;
 let mouseModel = null;
 let lampLight = null;
 let lampOn = false;
+let playerMixer = null;
 
 function shouldDoorIntro() {
   try {
@@ -156,7 +158,7 @@ function loadModel(path, onLoad, onError) {
           }
         }
       });
-      onLoad(model);
+      onLoad(gltf);
     },
     (progressEvent) => {
       if (progressEvent.lengthComputable) {
@@ -178,7 +180,8 @@ function loadModel(path, onLoad, onError) {
 function loadMainModels(onComplete) {
   let loadedCount = 0;
 
-  loadModel('assets/models/room3d.glb', (room) => {
+  loadModel('assets/models/room3d.glb', (gltf) => {
+    const room = gltf.scene;
     room.scale.set(1.1, 1.1, 1.1);
     room.position.set(0, 0.5, 0);
     scene.add(room);
@@ -204,21 +207,30 @@ function loadMainModels(onComplete) {
     if (loadedCount === 3) onComplete();
   });
 
-  function addPlayer(character) {
+  function addPlayer(gltf) {
+    const character = gltf.scene;
     character.name = 'player';
     character.scale.set(0.9, 0.9, 0.9);
     character.position.set(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y, CONFIG.playerStartPos.z);
     character.rotation.y = Math.PI/2;
     scene.add(character);
     player = character;
+
+    // Tạo animation mixer nếu có animations
+    if (gltf.animations && gltf.animations.length > 0) {
+      playerMixer = new THREE.AnimationMixer(character);
+      initPlayerAnimations(playerMixer, gltf.animations);
+      console.log('✅ Tạo AnimationMixer cho player với', gltf.animations.length, 'animations');
+    }
+
     loadedCount++;
     if (loadedCount === 3) onComplete();
   }
 
-  loadModel('assets/models/CharKL.glb', (character) => addPlayer(character));
+  loadModel('assets/models/CharKL.glb', (gltf) => addPlayer(gltf));
 
-  loadModel('assets/models/Mice.glb', (mouse) => {
-    mouseModel = mouse;
+  loadModel('assets/models/Mice.glb', (gltf) => {
+    mouseModel = gltf.scene;
     mouseModel.scale.set(0.1, 0.1, 0.1);
     mouseModel.position.set(-4.5, 2, -3);
     mouseModel.rotation.y = Math.PI / 2;
@@ -338,6 +350,10 @@ export function getRenderer() {
 
 export function getPlayer() {
   return player;
+}
+
+export function getPlayerMixer() {
+  return playerMixer;
 }
 
 export function getMouseModel() {

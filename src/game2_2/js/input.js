@@ -7,6 +7,7 @@ import { updateCSS3DRendererSize, isEmbeddedGameActive, sendEmbeddedStartGame } 
 import { pauseBgMusic } from './ui.js';
 import * as THREE from 'three';
 import { handleMouseClick, isMouseVisible } from './mouse.js';
+import { isPositionBlocked } from './collision.js';
 
 export function initInput(player, deskZone, bedZone, lampZone, zoneRadius) {
   // Keyboard events (keep for E and Space)
@@ -81,6 +82,12 @@ export function initInput(player, deskZone, bedZone, lampZone, zoneRadius) {
     const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); // Y=0 plane
     const target = new THREE.Vector3();
     raycaster.ray.intersectPlane(plane, target);
+
+    // Check nếu vị trí click có collision không
+    if (isPositionBlocked(target)) {
+      // Vị trí bị block, không nhận target
+      return;
+    }
 
     // Set player target to clicked position
     setPlayerTarget(target.x, 0, target.z);
