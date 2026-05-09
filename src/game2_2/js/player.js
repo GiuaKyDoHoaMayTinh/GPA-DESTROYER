@@ -10,8 +10,6 @@ import { shouldOpenEmbeddedWhenSitting, onPlayerSatDeskAfterPose } from './story
 
 let actionState = 'walk';
 let isMoving = false;
-let walkAnimationTime = 0;
-const walkAnimationSpeed = -2; // Tốc độ bobbing
 const PLAYER_DEBUG = true;
 
 let playerTarget = new THREE.Vector3(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y, CONFIG.playerStartPos.z); // Vị trí mục tiêu cho nhân vật
@@ -62,7 +60,6 @@ export function stopWalkAnimation() {
 export function initPlayer() {
   actionState = 'walk';
   isMoving = false;
-  walkAnimationTime = 0;
   playerTarget.set(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y, CONFIG.playerStartPos.z);
   lastPosition.set(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y, CONFIG.playerStartPos.z);
   stuckTimer = 0;
@@ -173,8 +170,6 @@ export function updatePlayerMovement(player, dt) {
 
   lastPosition.copy(player.position);
 
-  // Cập nhật animation đi bộ (bỏ bobbing)
-  walkAnimationTime += dt * walkAnimationSpeed;
 }
 
 export function setPlayerPose(player, position, rotationY, stateText, rotationX = 0, rotationZ = 0) {
