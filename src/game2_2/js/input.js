@@ -1,4 +1,4 @@
-﻿// input.js - Xu ly input tu ban phim va chuot
+// input.js - Xử lý input từ bàn phím và chuột
 
 import { updatePlayerInput, standUp, tryInteract, setPlayerTarget, getPlayerDirection } from './player.js';
 import { getCamera } from './camera.js';
@@ -7,22 +7,21 @@ import { updateCSS3DRendererSize, isEmbeddedGameActive, sendEmbeddedStartGame, e
 import { pauseBgMusic } from './ui.js';
 import * as THREE from 'three';
 import { handleMouseClick, isMouseVisible } from './mouse.js';
-import { isPositionBlocked } from './collision.js';
 
 // Function to show cursor click indicator
 function showClickIndicator(clientX, clientY) {
   const indicator = document.getElementById('cursor-click-indicator');
   if (!indicator) return;
-
+  
   const direction = getPlayerDirection();
-  const rotationDegrees = (direction * 180) / Math.PI + 180;
-
+  const rotationDegrees = (direction * 180) / Math.PI + 180; // Thêm 180 độ để xoay đúng hướng
+  
   indicator.style.left = clientX + 'px';
   indicator.style.top = clientY + 'px';
   indicator.style.transform = `translate(-50%, -50%) rotate(${rotationDegrees}deg)`;
   indicator.style.opacity = '1';
   indicator.style.transition = 'opacity 0.6s ease-out';
-
+  
   setTimeout(() => {
     indicator.style.opacity = '0';
   }, 100);
@@ -74,7 +73,7 @@ export function initInput(player, deskZone, bedZone, lampZone, zoneRadius) {
   });
 
   window.addEventListener('keyup', (event) => {
-    // If embedded game is active, do not handle game2_2 movement input
+    // Nếu game embedded active, không handle input cho game2_2
     if (isEmbeddedGameActive()) return;
 
     const key = event.key.toLowerCase();
@@ -96,20 +95,16 @@ export function initInput(player, deskZone, bedZone, lampZone, zoneRadius) {
 
     // First, check if clicking on mouse
     if (isMouseVisible() && handleMouseClick(raycaster, camera, scene)) {
+      // Mouse was clicked, handled
       return;
     }
 
-    // If embedded game is active, do not handle movement click
+    // Nếu game embedded active, không handle click cho movement
     if (isEmbeddedGameActive()) return;
 
-    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); // Y=0 plane
     const target = new THREE.Vector3();
     raycaster.ray.intersectPlane(plane, target);
-
-    // Check whether clicked target is blocked by collision
-    if (isPositionBlocked(target)) {
-      return;
-    }
 
     // Show cursor click indicator
     showClickIndicator(event.clientX, event.clientY);
@@ -123,11 +118,11 @@ export function initWindowResize(renderer, camera) {
   window.addEventListener('resize', () => {
     const width = window.innerWidth;
     const height = window.innerHeight;
-
+    
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     renderer.setSize(width, height);
-
+    
     // Resize CSS3DRenderer
     updateCSS3DRendererSize(width, height);
   });

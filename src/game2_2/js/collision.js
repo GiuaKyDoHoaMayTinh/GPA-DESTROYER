@@ -50,53 +50,13 @@ export function checkCollision(newPosition, oldPosition, playerRadius = 0.4) {
   // Kiểm tra va chạm với các obstacle
   for (const obstacle of OBSTACLES) {
     if (obstacle.box.intersectsSphere(playerSphere)) {
-      // Va chạm detected, tìm vị trí an toàn gần nhất giữa oldPosition và newPosition
-      return findSafePosition(oldPosition, newPosition, playerRadius);
+      // Va chạm detected, giữ vị trí cũ
+      return oldPosition.clone();
     }
   }
 
   // Không va chạm, clamping vào ranh giới phòng
   return clampPlayerPosition(newPosition, playerRadius);
-}
-
-function findSafePosition(start, end, playerRadius = 0.4) {
-  // Binary search để tìm điểm gần end nhất mà an toàn
-  let low = 0;
-  let high = 1;
-  const iterations = 5; // Số lần binary search
-  
-  for (let i = 0; i < iterations; i++) {
-    const mid = (low + high) / 2;
-    const testPos = new THREE.Vector3()
-      .copy(start)
-      .lerp(end, mid);
-    
-    const testSphere = new THREE.Sphere(testPos, playerRadius);
-    let collision = false;
-    
-    // Kiểm tra collision tại testPos
-    for (const obstacle of OBSTACLES) {
-      if (obstacle.box.intersectsSphere(testSphere)) {
-        collision = true;
-        break;
-      }
-    }
-    
-    if (collision) {
-      // testPos bị block, tìm về phía start
-      high = mid;
-    } else {
-      // testPos safe, có thể tìm xa hơn về phía end
-      low = mid;
-    }
-  }
-  
-  // Trả về vị trí an toàn cuối cùng
-  const safePos = new THREE.Vector3()
-    .copy(start)
-    .lerp(end, low);
-  
-  return clampPlayerPosition(safePos, playerRadius);
 }
 
 export function isNearDeskZone(position, deskZone, radius = 1.5) {
@@ -117,17 +77,4 @@ export function getRoomBounds() {
 
 export function getObstacles() {
   return OBSTACLES;
-}
-
-export function isPositionBlocked(position, playerRadius = 0.4) {
-  const playerSphere = new THREE.Sphere(position, playerRadius);
-  
-  // Kiểm tra va chạm với các obstacle
-  for (const obstacle of OBSTACLES) {
-    if (obstacle.box.intersectsSphere(playerSphere)) {
-      return true; // Vị trí bị block
-    }
-  }
-  
-  return false; // Vị trí an toàn
 }
