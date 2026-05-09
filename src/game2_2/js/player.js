@@ -44,25 +44,22 @@ function playerDebug(tag, extra = {}) {
 
 export function playWalkAnimation() {
   if (!walkAction) return;
-
-  // Resume nếu đang pause để tránh reset pose về frame 0.
-  if (walkAction.paused) {
-    walkAction.paused = false;
-  }
-
+  walkAction.enabled = true;
+  walkAction.paused = false;
+  walkAction.setEffectiveWeight(1);
+  walkAction.setEffectiveTimeScale(1);
   if (!walkAction.isRunning()) {
+    walkAction.reset();
     walkAction.play();
   }
 }
 
 export function stopWalkAnimation() {
   if (!walkAction) return;
-
-  // Đưa animation về frame đầu (time=0) và pause, không dùng stop().
+  walkAction.stop();
+  walkAction.enabled = false;
+  walkAction.paused = false;
   walkAction.time = 0;
-  if (walkAction.isRunning()) {
-    walkAction.paused = true;
-  }
 }
 
 export function initPlayer() {
