@@ -72,7 +72,7 @@
   <script src="../../js/scoreClient.js"></script>
   <script type="module">
     import * as THREE from 'three';
-    import { initScene, loadModels, getScene, getRenderer, getPlayer, getMouseModel, getLampState, updateDoorIntro } from './js/scene.js';
+    import { initScene, loadModels, getScene, getRenderer, getPlayer, getMouseModel, getLampState, updateDoorIntro, getPlayerMixer } from './js/scene.js';
     import { initCamera, updateCameraFollow, getCamera, updateCameraAspect } from './js/camera.js';
     import { initInput, initWindowResize } from './js/input.js';
     import { initPlayer, updatePlayerMovement, getActionState, setPlayerTarget, standUp } from './js/player.js';
@@ -155,7 +155,13 @@
 
       updateDoorIntro(dt);
 
-      // Cập nhật nhân vật
+      // Cập nhật animation mixer
+      const playerMixer = getPlayerMixer();
+      if (playerMixer) {
+        playerMixer.update(dt);
+      }
+
+      // Cập nhật nhân vật sau animation để movement không bị animation ghi đè transform
       if (player) {
         story.storyTick(player);
         updatePlayerMovement(player, dt);
