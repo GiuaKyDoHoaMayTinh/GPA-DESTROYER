@@ -117,7 +117,7 @@
     var caption = document.querySelector('.play-journey-caption');
     var icons = document.querySelector('.play-progress-icons');
     if (caption) {
-      caption.textContent = homeToSchool ? 'Từ nhà → đến trường' : 'Từ trường → về nhà';
+      caption.textContent = homeToSchool ? 'Nhà → Trường' : 'Trường → Nhà';
     }
     if (icons) {
       icons.innerHTML = homeToSchool
@@ -341,7 +341,7 @@
         return;
       }
       if (p !== p2) {
-        showNameError('Hai mật khẩu không khớp.');
+        showNameError('Mật khẩu không khớp.');
         return;
       }
       fetch(apiPath('/api/auth/register'), {
@@ -384,7 +384,7 @@
         return;
       }
       if (isGuestNameTaken(raw)) {
-        showNameError('Tên đã được dùng trên máy này, chọn tên khác.');
+        showNameError('Tên đã được dùng. Vui lòng chọn tên khác.');
         return;
       }
       if (canUseApi()) {
