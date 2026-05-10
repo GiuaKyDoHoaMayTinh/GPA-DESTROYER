@@ -199,7 +199,6 @@ export function setPlayerPose(player, position, rotationY, stateText, rotationX 
   lastPosition.copy(position);
   actionState = stateText;
   isMoving = false;
-  walkAnimationTime = 0;
   stuckTimer = 0;
   stopWalkAnimation();
 
@@ -285,7 +284,6 @@ export function standUp(player, deskZone, bedZone) {
   
   actionState = 'walk';
   isMoving = false;
-  walkAnimationTime = 0;
   hideActionHint();
   playerDebug('standUp:completed', {
     x: newPos.x,
