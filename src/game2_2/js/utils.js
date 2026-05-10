@@ -2,8 +2,8 @@
 
 export const CONFIG = {
   deskZone: { x: -2.2, y: 0, z: -1.3 },
-  bedZone: { x: 3.5, y: 0, z: -1.0 },
-  lampZone: { x: 0.3, y: 1, z: -3.6 },
+  bedZone: { x: 2.5, y: 0, z: -1.0 },
+  lampZone: { x: 0.3, y: 0, z: -3.6 },
   zoneRadius: 1.4,
   lampRadius: 3,
   playerScale: 0.9,
