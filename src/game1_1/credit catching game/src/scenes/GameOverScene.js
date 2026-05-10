@@ -64,6 +64,33 @@ export class GameOverScene extends Phaser.Scene {
             });
         });
 
+        // Khung ESC chỉ hiện khi thua
+        if (!this.isWin) {
+            const escBoxWidth = 280;
+            const escBoxHeight = 60;
+            const escBoxX = this.scale.width - escBoxWidth - 20;
+            const escBoxY = 20;
+
+            const escBg = this.add.graphics();
+            escBg.fillStyle(0x000000, 0.5);
+            escBg.fillRoundedRect(escBoxX, escBoxY, escBoxWidth, escBoxHeight, 20);
+            escBg.lineStyle(2, 0xffffff, 0.3);
+            escBg.strokeRoundedRect(escBoxX, escBoxY, escBoxWidth, escBoxHeight, 20);
+
+            this.add.text(
+                escBoxX + escBoxWidth / 2,
+                escBoxY + escBoxHeight / 2,
+                'Nhấn ESC để thoát game',
+                {
+                    fontFamily: 'Arial',
+                    fontSize: '20px',
+                    fontStyle: 'bold',
+                    color: '#ffffff',
+                    align: 'center'
+                }
+            ).setOrigin(0.5);
+        }
+
         this.cameras.main.fadeIn(500);
     }
 
