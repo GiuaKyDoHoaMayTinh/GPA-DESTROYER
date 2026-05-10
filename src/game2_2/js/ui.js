@@ -120,7 +120,7 @@ export function updateHint(playerPosition, actionState, deskZone, bedZone, lampZ
       hintElement.textContent = '🖱️ Click để di chuyển';
     }
   } else if (actionState === 'sit') {
-    hintElement.textContent = '🪑 Bạn đang ngồi - Bấm Space để đứng.';
+    hintElement.textContent = '🪑 Bạn đang ngồi - Bấm Space/ESC để đứng.';
     if (shouldOpenEmbeddedWhenSitting()) {
       showActionHint('Bấm Enter để bắt đầu');
     } else {
