@@ -236,7 +236,7 @@ export function sitAtDesk(player, deskZone) {
 }
 
 export function lieOnBed(player, bedZone) {
-  const newPos = new THREE.Vector3(bedZone.x , -1.2, bedZone.z-0.25);
+  const newPos = new THREE.Vector3(bedZone.x+1 , -1.2, bedZone.z-0.25);
   setPlayerPose(player, newPos, 0 , 'lie',-Math.PI / 5.5);
 }
 
@@ -257,7 +257,7 @@ export function standUp(player, deskZone, bedZone) {
     newPos = new THREE.Vector3(deskZone.x + 1.5, 0, deskZone.z + 1);
     rotationY = Math.PI;
   } else if (actionState === 'lie') {
-    newPos = new THREE.Vector3(bedZone.x - 2.5, 0, bedZone.z - 0.5);
+    newPos = new THREE.Vector3(bedZone.x - 1.5, 0, bedZone.z - 0.5);
     rotationY = -Math.PI / 2;
   } else {
     playerDebug('standUp:skipped:unknownState');
